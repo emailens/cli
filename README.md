@@ -48,6 +48,32 @@ emailens export email.html --json -o ./report
 emailens export email.html --dark-mode --screenshots -o ./report
 ```
 
+### `emailens fix <file>`
+
+Generate AI-powered fixes for email compatibility issues. Uses `@emailens/engine` analysis to build a structured prompt, then calls Claude to fix structural issues (table layouts, VML, MSO conditionals) that static snippets can't handle.
+
+Requires `ANTHROPIC_API_KEY` environment variable and the optional `@anthropic-ai/sdk` dependency.
+
+```bash
+emailens fix email.html                           # Fix and print to stdout
+emailens fix email.html -o fixed.html             # Write to file
+emailens fix email.html --estimate                 # Show token estimate only (no AI call)
+emailens fix email.html --clients outlook-windows  # Scope to one client
+emailens fix email.html --json                     # Full JSON output with metadata
+emailens fix email.html --max-tokens 8000          # Limit prompt size
+cat email.html | emailens fix - --format jsx       # Pipe from stdin
+```
+
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
+| `--clients` | `-c` | Comma-separated client IDs to scope the fix |
+| `--output` | `-o` | Write fixed code to file instead of stdout |
+| `--json` | | Output as JSON (includes token estimates and metadata) |
+| `--quiet` | `-q` | Suppress spinners and decorations |
+| `--estimate` | | Only show token estimate without calling the AI |
+| `--max-tokens` | | Maximum input tokens for the prompt (default: 16000) |
+
 ### `emailens clients`
 
 List all 12 supported email clients.
@@ -75,6 +101,24 @@ Preview and export add:
 | `--dark-mode` | `-d` | Include dark mode simulation |
 | `--screenshots` | | Capture screenshots (requires `BROWSERLESS_URL`) |
 | `--out` | `-o` | Output directory |
+
+## AI Fixes
+
+The `fix` command requires an `ANTHROPIC_API_KEY` environment variable and the `@anthropic-ai/sdk` package:
+
+```bash
+npm install @anthropic-ai/sdk
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Use `--estimate` to check token usage before making an API call:
+
+```bash
+emailens fix email.html --estimate
+#   Input tokens:    ~4,200
+#   Output tokens:   ~5,400
+#   Warnings:        23 (5 structural)
+```
 
 ## Framework Support
 

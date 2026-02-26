@@ -1,6 +1,6 @@
 {
   "name": "@emailens/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool for email compatibility analysis — analyze, preview, and export email rendering across 12 email clients.",
   "type": "module",
   "bin": {
@@ -27,13 +27,14 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@emailens/engine": "^0.1.0",
+    "@emailens/engine": "^0.3.0",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "ora": "^8.2.0",
     "picocolors": "^1.1.1"
   },
   "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
     "sucrase": "^3.35.0",
     "@react-email/components": "^0.0.36",
     "@react-email/render": "^1.0.6",

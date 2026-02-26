@@ -5,7 +5,7 @@
     "": {
       "name": "@emailens/cli",
       "dependencies": {
-        "@emailens/engine": "^0.1.0",
+        "@emailens/engine": "^0.3.0",
         "citty": "^0.1.6",
         "cli-table3": "^0.6.5",
         "ora": "^8.2.0",
@@ -19,6 +19,7 @@
         "typescript": "^5.9.3",
       },
       "optionalDependencies": {
+        "@anthropic-ai/sdk": "^0.52.0",
         "@maizzle/framework": "^5.0.0",
         "@react-email/components": "^0.0.36",
         "@react-email/render": "^1.0.6",
@@ -30,6 +31,8 @@
   },
   "packages": {
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
+
+    "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.52.0", "", { "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-d4c+fg+xy9e46c8+YnrrgIQR45CZlAi7PwdzIfDXDM6ACxEZli1/fxhURsq30ZpMZy6LvSkr41jGq5aF5TD7rQ=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 
@@ -57,7 +60,7 @@
 
     "@csstools/utilities": ["@csstools/utilities@2.0.0", "", { "peerDependencies": { "postcss": "^8.4" } }, "sha512-5VdOr0Z71u+Yp3ozOx8T11N703wIFGVRgOWbOZMKgglPJsWA54MRIoMNVMa7shUToIhx5J8vX4sOZgD2XiihiQ=="],
 
-    "@emailens/engine": ["@emailens/engine@0.1.0", "", { "dependencies": { "cheerio": "^1.2.0", "css-tree": "^3.1.0" } }, "sha512-ljEE+rK05/dpUvcQn7s59YWc5tOQyYqcWCx+mQkzNg1XXQwhFI7YOCtOoWj+t8wXGsGvdFynUiIp4r9n4rzsDQ=="],
+    "@emailens/engine": ["@emailens/engine@0.3.1", "", { "dependencies": { "cheerio": "^1.2.0", "css-tree": "^3.1.0" } }, "sha512-xux4+sQ7+pcxCX/067yx6RvrvvitlpVa+aoLqm04ElXMBwWriwQ80UB/6nRPvhAONdM2Z1haKfZucXGSg2UfIw=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.3", "", { "os": "aix", "cpu": "ppc64" }, "sha512-9fJMTNFTWZMh5qwrBItuziu834eOCUcEqymSH7pY+zoMVEZg3gcPuBNxH1EvfVYe9h0x/Ptw8KBzv7qxb7l8dg=="],
 
