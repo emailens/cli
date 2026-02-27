@@ -1,0 +1,142 @@
+import { defineCommand } from "citty";
+import ora from "ora";
+import pc from "picocolors";
+import Table from "cli-table3";
+import {
+  auditEmail,
+  CompileError,
+  type AuditReport,
+} from "@emailens/engine";
+import { readInput, resolveFormat, toFramework } from "../utils.js";
+import { compile } from "@emailens/engine/compile";
+import { printScoreTable, printWarnings } from "../output/terminal.js";
+
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility"]);
+
+export default defineCommand({
+  meta: {
+    name: "audit",
+    description: "Full email audit: compatibility + spam + links + accessibility + images",
+  },
+  args: {
+    input: {
+      type: "positional",
+      description: "HTML file path or - for stdin",
+      required: true,
+    },
+    format: {
+      type: "string",
+      alias: "f",
+      description: "Input format: html, jsx, mjml, maizzle",
+    },
+    json: {
+      type: "boolean",
+      description: "Output as JSON",
+    },
+    quiet: {
+      type: "boolean",
+      alias: "q",
+      description: "Suppress spinners and decorations",
+    },
+    skip: {
+      type: "string",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility",
+    },
+  },
+  async run({ args }) {
+    const spinner = (args.quiet || args.json) ? null : ora();
+
+    try {
+      const format = resolveFormat(args.format, args.input);
+
+      // Read input
+      spinner?.start("Reading input...");
+      const source = await readInput(args.input);
+      spinner?.succeed("Input read");
+
+      // Compile
+      const html = await compile(source, format, args.input !== "-" ? args.input : undefined);
+
+      // Parse --skip flag
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility"> = [];
+      if (args.skip) {
+        for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
+          if (!VALID_SKIPS.has(s)) {
+            throw new Error(`Unknown skip value "${s}". Valid: ${Array.from(VALID_SKIPS).join(", ")}`);
+          }
+          skip.push(s as typeof skip[number]);
+        }
+      }
+
+      // Run audit
+      spinner?.start("Running full audit...");
+      const framework = toFramework(format);
+      const report = auditEmail(html, { framework, skip });
+      spinner?.succeed("Audit complete");
+
+      // Output
+      if (args.json) {
+        console.log(JSON.stringify(report, null, 2));
+      } else {
+        // Compatibility section
+        if (!skip.includes("compatibility")) {
+          printScoreTable(report.compatibility.scores, report.compatibility.warnings, { quiet: args.quiet });
+          printWarnings(report.compatibility.warnings, { quiet: args.quiet });
+        }
+
+        // Quality summary
+        printQualitySummary(report, skip, { quiet: args.quiet });
+      }
+    } catch (err) {
+      if (err instanceof CompileError) {
+        spinner?.fail(`Compilation failed (${err.phase}): ${err.message}`);
+      } else {
+        spinner?.fail((err as Error).message);
+      }
+      process.exit(1);
+    }
+  },
+});
+
+function printQualitySummary(
+  report: AuditReport,
+  skip: string[],
+  options?: { quiet?: boolean },
+): void {
+  if (!options?.quiet) {
+    console.log(pc.bold("  Quality Summary"));
+    console.log();
+  }
+
+  const table = new Table({
+    head: [pc.bold("Check"), pc.bold("Result")],
+    style: { head: [], border: [] },
+  });
+
+  if (!skip.includes("spam")) {
+    const { score, level, issues } = report.spam;
+    const color = score >= 90 ? pc.green : score >= 70 ? pc.yellow : pc.red;
+    table.push(["Spam Score", `${color(String(score))}/100 (${level}) — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
+  }
+
+  if (!skip.includes("links")) {
+    const { totalLinks, issues } = report.links;
+    const color = issues.length === 0 ? pc.green : pc.yellow;
+    table.push(["Links", `${totalLinks} link${totalLinks === 1 ? "" : "s"} — ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
+  }
+
+  if (!skip.includes("accessibility")) {
+    const { score, issues } = report.accessibility;
+    const color = score >= 90 ? pc.green : score >= 70 ? pc.yellow : pc.red;
+    table.push(["Accessibility", `${color(String(score))}/100 — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
+  }
+
+  if (!skip.includes("images")) {
+    const { total, issues } = report.images;
+    const color = issues.length === 0 ? pc.green : pc.yellow;
+    table.push(["Images", `${total} image${total === 1 ? "" : "s"} — ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
+  }
+
+  console.log(table.toString());
+  console.log();
+}

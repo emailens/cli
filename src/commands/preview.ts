@@ -5,10 +5,12 @@ import {
   analyzeEmail,
   generateCompatibilityScore,
   simulateDarkMode,
+  warningsForClient,
+  CompileError,
   type CSSWarning,
 } from "@emailens/engine";
 import { readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
-import { compile } from "../compile/index.js";
+import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 import { printJson } from "../output/json.js";
 
@@ -94,7 +96,7 @@ export default defineCommand({
           scores[id] = data;
         }
       }
-      const filteredWarnings = warnings.filter((w) => clientSet.has(w.client));
+      const filteredWarnings = clientIds.flatMap(id => warningsForClient(warnings, id));
       spinner?.succeed("Analysis complete");
 
       // Dark mode
@@ -135,7 +137,11 @@ export default defineCommand({
         printWarnings(filteredWarnings, { quiet: args.quiet });
       }
     } catch (err) {
-      spinner?.fail((err as Error).message);
+      if (err instanceof CompileError) {
+        spinner?.fail(`Compilation failed (${err.phase}): ${err.message}`);
+      } else {
+        spinner?.fail((err as Error).message);
+      }
       process.exit(1);
     }
   },

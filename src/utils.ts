@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { EMAIL_CLIENTS, type Framework, type InputFormat } from "@emailens/engine";
-import { detectFormat } from "./compile/detect.js";
+import { detectFormat } from "@emailens/engine/compile";
 
 const VALID_FORMATS = new Set(["html", "jsx", "mjml", "maizzle"]);
 

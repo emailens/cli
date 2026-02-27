@@ -7,10 +7,11 @@ import {
   generateAiFix,
   estimateAiFixTokens,
   AI_FIX_SYSTEM_PROMPT,
+  CompileError,
   type AiProvider,
 } from "@emailens/engine";
 import { readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
-import { compile } from "../compile/index.js";
+import { compile } from "@emailens/engine/compile";
 
 export default defineCommand({
   meta: {
@@ -215,7 +216,11 @@ export default defineCommand({
         console.log("\n" + result.code);
       }
     } catch (err) {
-      spinner?.fail((err as Error).message);
+      if (err instanceof CompileError) {
+        spinner?.fail(`Compilation failed (${err.phase}): ${err.message}`);
+      } else {
+        spinner?.fail((err as Error).message);
+      }
       process.exit(1);
     }
   },
