@@ -11,6 +11,15 @@ import {
   CompileError,
   type CSSWarning,
 } from "@emailens/engine";
+
+// toPlainText available in engine >=0.8.6
+let toPlainText: ((html: string) => string) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ({ toPlainText } = require("@emailens/engine"));
+} catch {
+  // older engine version
+}
 import { readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { generateHtmlReport } from "../output/html-report.js";
@@ -54,6 +63,10 @@ export default defineCommand({
     json: {
       type: "boolean",
       description: "Export as JSON instead of HTML",
+    },
+    "plain-text": {
+      type: "boolean",
+      description: "Also export a plain text version (.txt) for multipart emails",
     },
     quiet: {
       type: "boolean",
@@ -154,6 +167,17 @@ export default defineCommand({
         const htmlPath = join(outDir, "report.html");
         writeFileSync(htmlPath, htmlReport);
         spinner?.succeed(`HTML report saved to ${htmlPath}`);
+      }
+
+      // Plain text export
+      if (args["plain-text"] && toPlainText) {
+        spinner?.start("Generating plain text version...");
+        const plainText = toPlainText(html);
+        const txtPath = join(outDir, "email.txt");
+        writeFileSync(txtPath, plainText);
+        spinner?.succeed(`Plain text saved to ${txtPath}`);
+      } else if (args["plain-text"] && !toPlainText) {
+        spinner?.warn("Plain text export requires @emailens/engine >=0.8.6");
       }
 
       if (!args.quiet) {

@@ -116,7 +116,7 @@ function printQualitySummary(
   if (!skip.includes("spam")) {
     const { score, level, issues } = report.spam;
     const color = score >= 90 ? pc.green : score >= 70 ? pc.yellow : pc.red;
-    table.push(["Spam Score", `${color(String(score))}/100 (${level}) — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
+    table.push(["Content Hygiene", `${color(String(score))}/100 (${level}) — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
   }
 
   if (!skip.includes("links")) {

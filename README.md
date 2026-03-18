@@ -74,6 +74,45 @@ cat email.html | emailens fix - --format jsx       # Pipe from stdin
 | `--estimate` | | Only show token estimate without calling the AI |
 | `--max-tokens` | | Maximum input tokens for the prompt (default: 16000) |
 
+### `emailens lint <file|glob>`
+
+CI/CD-friendly linting with structured exit codes. Flattens all audit checks (compatibility, content hygiene, links, accessibility, images, inbox preview, size, template variables) into a unified issue list.
+
+```bash
+emailens lint email.html
+emailens lint src/*.html
+emailens lint email.html --json
+emailens lint email.html --fail-on-warning
+emailens lint email.html --skip spam,links
+emailens lint email.html --max-warnings 5
+```
+
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
+| `--json` | | Output as JSON |
+| `--fail-on-warning` | | Exit 2 if warnings found |
+| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables` |
+| `--max-warnings` | | Fail if more than n warnings |
+
+**Exit codes:**
+- `0` — clean
+- `1` — errors found
+- `2` — warnings only (with `--fail-on-warning` or `--max-warnings` exceeded)
+
+**Output format:**
+
+```
+src/emails/welcome.html
+  error  outlook-windows     border-radius           Not supported in Outlook Windows
+  warn   spam                caps-ratio              20%+ of words are ALL CAPS
+
+src/emails/newsletter.html
+  pass   No issues found
+
+2 files | 1 error | 1 warning
+```
+
 ### `emailens clients`
 
 List all 12 supported email clients.
