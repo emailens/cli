@@ -1,6 +1,11 @@
 # @emailens/cli
 
-CLI tool for email compatibility analysis — preview how HTML emails render across 12 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Superhuman).
+[![npm](https://img.shields.io/npm/v/@emailens/cli)](https://www.npmjs.com/package/@emailens/cli)
+[![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/emailens/mcp)
+
+CLI tool for email compatibility analysis — preview how HTML emails render across 15 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Superhuman).
+
+> **Prefer AI?** Use the [MCP server](https://github.com/emailens/mcp) — same engine, works with Claude, Cursor, and any MCP client.
 
 ## Install
 
