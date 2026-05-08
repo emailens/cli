@@ -118,9 +118,36 @@ src/emails/newsletter.html
 2 files | 1 error | 1 warning
 ```
 
+#### CI / GitHub Actions
+
+Drop this into `.github/workflows/email-lint.yml` to fail PRs that introduce broken email CSS, spam triggers, or accessibility regressions:
+
+```yaml
+name: Email lint
+
+on:
+  pull_request:
+    paths:
+      - 'emails/**'
+      - 'src/emails/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lint emails
+        run: npx -y @emailens/cli lint 'emails/**/*.{html,tsx,mjml}' --fail-on-warning
+```
+
+For React Email / MJML / Maizzle source files, the CLI auto-detects the format from the extension. Want full preview reports (with screenshots and shareable links) on every PR? Use the [Emailens GitHub Action](https://github.com/marketplace/actions/emailens-email-preview-check) instead — it wraps the same engine.
+
 ### `emailens clients`
 
-List all 12 supported email clients.
+List all 15 supported email clients.
 
 ```bash
 emailens clients
