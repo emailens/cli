@@ -1,9 +1,23 @@
-# @emailens/cli
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/wordmark-dark.svg">
+  <img src="./docs/wordmark-light.svg" alt="emailens / cli" width="444">
+</picture>
+
+**The rendering linter for email, in your terminal**
 
 [![npm](https://img.shields.io/npm/v/@emailens/cli)](https://www.npmjs.com/package/@emailens/cli)
 [![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/emailens/mcp)
+[![GitHub stars](https://img.shields.io/github/stars/emailens/cli?style=flat)](https://github.com/emailens/cli/stargazers)
+
+</div>
 
 CLI tool for email compatibility analysis — preview how HTML emails render across 15 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Superhuman).
+
+Across the 251 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 245 before your users do.
+
+![emailens lint output showing errors and warnings across email clients](./docs/lint-demo.png)
 
 > **Prefer AI?** Use the [MCP server](https://github.com/emailens/mcp) — same engine, works with Claude, Cursor, and any MCP client.
 
@@ -231,3 +245,7 @@ echo '<html><body>Hello</body></html>' | emailens preview - --json
 ## License
 
 MIT
+
+---
+
+If this saved you from an Outlook surprise, [a star](https://github.com/emailens/cli) helps other email developers find it.
