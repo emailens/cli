@@ -1,7 +1,7 @@
 {
   "name": "@emailens/cli",
-  "version": "0.3.5",
-  "description": "CLI tool for email compatibility analysis — analyze, preview, and export email rendering across 15 email clients.",
+  "version": "0.4.0",
+  "description": "CLI tool for email compatibility analysis — analyze, preview, and export email rendering across 21 email clients.",
   "type": "module",
   "bin": {
     "emailens": "./dist/index.js"
