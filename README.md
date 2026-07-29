@@ -13,9 +13,9 @@
 
 </div>
 
-CLI tool for email compatibility analysis — preview how HTML emails render across 15 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Superhuman).
+CLI tool for email compatibility analysis — preview how HTML emails render across 21 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Proton Mail, AOL, Fastmail, Superhuman).
 
-Across the 251 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 245 before your users do.
+Across the 255 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 249 before your users do.
 
 ![emailens lint output showing errors and warnings across email clients](./docs/lint-demo.png)
 
@@ -95,7 +95,7 @@ cat email.html | emailens fix - --format jsx       # Pipe from stdin
 
 ### `emailens lint <file|glob>`
 
-CI/CD-friendly linting with structured exit codes. Flattens all audit checks (compatibility, content hygiene, links, accessibility, images, inbox preview, size, template variables) into a unified issue list.
+CI/CD-friendly linting with structured exit codes. Flattens all audit checks (compatibility, content hygiene, links, accessibility, images, inbox preview, size, template variables, content overflow, visual bugs) into a unified issue list.
 
 ```bash
 emailens lint email.html
@@ -111,7 +111,7 @@ emailens lint email.html --max-warnings 5
 | `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
 | `--json` | | Output as JSON |
 | `--fail-on-warning` | | Exit 2 if warnings found |
-| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables` |
+| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual` |
 | `--max-warnings` | | Fail if more than n warnings |
 
 **Exit codes:**
@@ -161,7 +161,7 @@ For React Email / MJML / Maizzle source files, the CLI auto-detects the format f
 
 ### `emailens clients`
 
-List all 15 supported email clients.
+List all 21 supported email clients.
 
 ```bash
 emailens clients
