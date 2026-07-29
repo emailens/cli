@@ -27,7 +27,7 @@ interface LintFileResult {
 
 const VALID_SKIPS = new Set([
   "spam", "links", "accessibility", "images",
-  "compatibility", "inboxPreview", "size", "templateVariables",
+  "compatibility", "inboxPreview", "size", "templateVariables", "overflow", "visual",
 ]);
 
 export default defineCommand({
@@ -56,7 +56,7 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual",
     },
     maxWarnings: {
       type: "string",
@@ -99,7 +99,7 @@ export default defineCommand({
       for (const file of files) {
         const format = resolveFormat(args.format, file);
         const source = await readInput(file);
-        const html = await compile(source, format, file);
+        const html = await compile(source, format);
         const framework = toFramework(format);
 
         const report = auditEmail(html, {
@@ -174,7 +174,7 @@ export default defineCommand({
   },
 });
 
-type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables";
+type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual";
 
 /**
  * Resolve a file path or simple glob pattern to an array of files.
@@ -313,6 +313,28 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
       issues.push({
         severity: issue.severity,
         category: "templateVars",
+        rule: issue.rule,
+        message: issue.message,
+      });
+    }
+  }
+
+  if (!skip.includes("overflow")) {
+    for (const issue of report.overflow.issues) {
+      issues.push({
+        severity: issue.severity,
+        category: "overflow",
+        rule: issue.rule,
+        message: issue.message,
+      });
+    }
+  }
+
+  if (!skip.includes("visual")) {
+    for (const issue of report.visual.issues) {
+      issues.push({
+        severity: issue.severity,
+        category: "visual",
         rule: issue.rule,
         message: issue.message,
       });

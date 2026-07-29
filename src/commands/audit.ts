@@ -11,12 +11,12 @@ import { readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 
-const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility"]);
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual"]);
 
 export default defineCommand({
   meta: {
     name: "audit",
-    description: "Full email audit: compatibility + spam + links + accessibility + images",
+    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual",
   },
   args: {
     input: {
@@ -40,7 +40,7 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual",
     },
   },
   async run({ args }) {
@@ -55,10 +55,10 @@ export default defineCommand({
       spinner?.succeed("Input read");
 
       // Compile
-      const html = await compile(source, format, args.input !== "-" ? args.input : undefined);
+      const html = await compile(source, format);
 
       // Parse --skip flag
-      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility"> = [];
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual"> = [];
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -135,6 +135,18 @@ function printQualitySummary(
     const { total, issues } = report.images;
     const color = issues.length === 0 ? pc.green : pc.yellow;
     table.push(["Images", `${total} image${total === 1 ? "" : "s"} — ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
+  }
+
+  if (!skip.includes("overflow")) {
+    const { issues } = report.overflow;
+    const color = issues.length === 0 ? pc.green : pc.yellow;
+    table.push(["Content Overflow", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
+  }
+
+  if (!skip.includes("visual")) {
+    const { issues } = report.visual;
+    const color = issues.length === 0 ? pc.green : pc.yellow;
+    table.push(["Visual Bugs", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
   }
 
   console.log(table.toString());

@@ -72,7 +72,7 @@ export default defineCommand({
       spinner?.succeed("Input read");
 
       // Compile (passthrough for html, auto-detects from extension)
-      const html = await compile(source, format, args.input !== "-" ? args.input : undefined);
+      const html = await compile(source, format);
 
       // Resolve clients
       const clientIds = resolveClients(args.clients);

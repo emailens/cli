@@ -67,7 +67,7 @@ export default defineCommand({
       // Read and compile input
       spinner?.start("Reading input...");
       const source = await readInput(args.input);
-      const html = await compile(source, format, args.input !== "-" ? args.input : undefined);
+      const html = await compile(source, format);
       spinner?.succeed("Input read");
 
       // Analyze
