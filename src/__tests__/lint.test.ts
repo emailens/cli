@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { EMAIL_CLIENTS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
-import { positionsApply } from "../commands/lint.js";
+import { positionsApply } from "../utils.js";
 
 /**
  * End-to-end tests for `emailens lint`.
@@ -297,6 +297,27 @@ describe("lint — source positions", () => {
     );
     expect(documentLevel.length).toBeGreaterThan(0); // else this test proves nothing
     for (const issue of documentLevel) expect(issue.loc).toBeUndefined();
+  });
+
+  test("--json lists every place a property breaks, not just the first", async () => {
+    const repeated = join(dir, "repeated.html");
+    writeFileSync(
+      repeated,
+      ["<html lang=\"en\"><head><meta charset=\"utf-8\"><title>T</title></head><body>",
+       '  <div style="border-radius:8px">a</div>',
+       '  <div style="border-radius:8px">b</div>',
+       '  <div style="border-radius:8px">c</div>',
+       "</body></html>"].join("\n"),
+    );
+    const { stdout } = await cli("lint", repeated, "--json");
+    const issue = JSON.parse(stdout).files[0].issues.find(
+      (i: { rule: string }) => i.rule === "border-radius",
+    );
+
+    expect(issue.locs).toHaveLength(3);
+    expect(issue.locs.map((l: { line: number }) => l.line)).toEqual([2, 3, 4]);
+    expect(issue.loc).toEqual(issue.locs[0]);
+    expect(issue.locsTruncated).toBeUndefined();
   });
 
   test("positions are reported for HTML only", () => {

@@ -46,6 +46,17 @@ emailens analyze email.html --json
 cat email.html | emailens analyze -
 ```
 
+Warnings show where the property is used, and how many other places share the
+problem:
+
+```
+  ⚠ Outlook (New) (1 issue)
+    ⚠ border-radius (4:8 +2 more) — Outlook (New) does not support "border-radius".
+```
+
+`--json` carries the full `loc` / `locs` for each warning. As with `lint`,
+positions are reported for HTML input only — see below.
+
 ### `emailens preview <file>`
 
 Full preview pipeline: transforms, analysis, dark mode simulation, and optional screenshots.
@@ -138,6 +149,10 @@ no position and leave the column blank. With `--json`, each issue carries a
 `loc` object instead — `line`, `column`, `endLine`, `endColumn`, `offset`,
 `length` — for editors, annotations, and agents that need to point at or edit
 the exact source.
+
+One property can break in many places, so CSS issues also carry `locs`: every
+occurrence in document order, with `loc` as the first, and `locsTruncated: true`
+when there were more than 100.
 
 Positions are reported for **HTML sources only**. JSX, MJML and Maizzle are
 compiled before analysis, so a line number would refer to generated output

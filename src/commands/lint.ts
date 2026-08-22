@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { readInput, resolveFormat, toFramework } from "../utils.js";
+import { positionsApply, readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import {
   auditEmail,
@@ -19,6 +19,10 @@ interface LintIssue {
   detail?: string;
   /** Where in the file the issue is. HTML sources only — see `positionsApply`. */
   loc?: SourceLocation;
+  /** Every place a CSS property breaks, in document order. */
+  locs?: SourceLocation[];
+  /** `locs` is capped and does not list every occurrence. */
+  locsTruncated?: boolean;
 }
 
 interface LintFileResult {
@@ -195,16 +199,6 @@ export default defineCommand({
 
 type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual";
 
-/**
- * Do source positions refer to the file the user wrote?
- *
- * Only for plain HTML. JSX, MJML and Maizzle are compiled before analysis, so
- * a position would point into generated output — worse than no position at all,
- * because it looks authoritative.
- */
-export function positionsApply(format: string): boolean {
-  return format === "html";
-}
 
 /**
  * Resolve a file path or simple glob pattern to an array of files.
@@ -236,6 +230,15 @@ async function resolveGlob(pattern: string): Promise<string[]> {
     .sort();
 }
 
+/** Add occurrences we haven't already recorded, keeping document order. */
+function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined) {
+  if (!from) return;
+  for (const loc of from) {
+    if (!into.some((l) => l.offset === loc.offset)) into.push(loc);
+  }
+  into.sort((a, b) => a.offset - b.offset);
+}
+
 /**
  * Flatten an AuditReport into a unified LintIssue array.
  */
@@ -244,22 +247,34 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
 
   // CSS compatibility warnings → group by property (deduplicate across clients)
   if (!skip.includes("compatibility")) {
-    const seenProps = new Map<string, { severity: "error" | "warning" | "info"; clients: string[]; message: string; loc?: SourceLocation }>();
+    const seenProps = new Map<string, {
+      severity: "error" | "warning" | "info";
+      clients: string[];
+      message: string;
+      loc?: SourceLocation;
+      locs: SourceLocation[];
+      locsTruncated?: boolean;
+    }>();
 
     for (const w of report.compatibility.warnings) {
       const key = `${w.property}\0${w.severity}`;
       const existing = seenProps.get(key);
       if (existing) {
         existing.clients.push(w.client);
-        // Every client's warning for a property shares one source position;
-        // keep the first one that carries it.
+        // Clients repeat the same finding, but selector groups don't: `div` and
+        // `span` breaking one property are separate warnings, so union their
+        // occurrences to get every place it actually breaks.
         existing.loc ??= w.loc;
+        mergeLocs(existing.locs, w.locs);
+        if (w.locsTruncated) existing.locsTruncated = true;
       } else {
         seenProps.set(key, {
           severity: w.severity,
           clients: [w.client],
           message: w.message,
           loc: w.loc,
+          locs: [...(w.locs ?? [])],
+          ...(w.locsTruncated ? { locsTruncated: true } : {}),
         });
       }
     }
@@ -272,6 +287,8 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         rule: property,
         message: val.message,
         ...(val.loc ? { loc: val.loc } : {}),
+        ...(val.locs.length ? { locs: val.locs } : {}),
+        ...(val.locsTruncated ? { locsTruncated: true } : {}),
       });
     }
   }
