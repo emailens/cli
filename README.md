@@ -123,14 +123,26 @@ emailens lint email.html --max-warnings 5
 
 ```
 src/emails/welcome.html
-  error  outlook-windows     border-radius           Not supported in Outlook Windows
-  warn   spam                caps-ratio              20%+ of words are ALL CAPS
+  error  12:8  outlook-windows     border-radius           Not supported in Outlook Windows
+  warn         spam                caps-ratio              20%+ of words are ALL CAPS
 
 src/emails/newsletter.html
   pass   No issues found
 
 2 files | 1 error | 1 warning
 ```
+
+Issues that belong to a specific place in the file carry a `line:col`; findings
+about the document as a whole (spam signals, Gmail clipping, inbox preview) have
+no position and leave the column blank. With `--json`, each issue carries a
+`loc` object instead — `line`, `column`, `endLine`, `endColumn`, `offset`,
+`length` — for editors, annotations, and agents that need to point at or edit
+the exact source.
+
+Positions are reported for **HTML sources only**. JSX, MJML and Maizzle are
+compiled before analysis, so a line number would refer to generated output
+rather than the file you wrote; the CLI omits it rather than print one that
+looks authoritative and isn't.
 
 #### CI / GitHub Actions
 

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { EMAIL_CLIENTS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
+import { positionsApply } from "../commands/lint.js";
 
 /**
  * End-to-end tests for `emailens lint`.
@@ -22,6 +23,8 @@ let dir: string;
 let clean: string;
 let warns: string;
 let errors: string;
+let located: string;
+let locatedSource: string;
 
 async function cli(...args: string[]) {
   // `bun ENTRY`, not `bun run ENTRY`: `bun run` swallows flags it recognises as
@@ -65,6 +68,25 @@ beforeAll(() => {
     <a href="https://example.com/track" style="color:#1a1a1a">Track your order</a>
     ${FOOT}`,
   );
+
+  // Multi-line on purpose: the point of this fixture is that every issue in it
+  // has a line and column a human could go to.
+  locatedSource = [
+    /* 1 */ '<html lang="en">',
+    /* 2 */ "<head>",
+    /* 3 */ "  <style>",
+    /* 4 */ "    .card { border-radius: 8px; }",
+    /* 5 */ "  </style>",
+    /* 6 */ '  <meta charset="utf-8"><title>Order shipped</title>',
+    /* 7 */ "</head>",
+    /* 8 */ "<body>",
+    /* 9 */ '  <a href="http://example.com/track">Track your order</a>',
+    /* 10 */ '  <img src="https://example.com/a.png">',
+    /* 11 */ "  <p>Hello {{first_name}}</p>",
+    /* 12 */ FOOT,
+  ].join("\n");
+  located = join(dir, "located.html");
+  writeFileSync(located, locatedSource);
 
   // An empty mailto: is an error — the link is simply broken.
   errors = join(dir, "errors.html");
@@ -212,5 +234,78 @@ describe("cli metadata", () => {
   test("the client count in the description is not hardcoded", () => {
     // It claimed 12 while the engine shipped 15.
     expect(meta.description).toContain(String(EMAIL_CLIENTS.length));
+  });
+});
+
+describe("lint — source positions", () => {
+  /** Derive line/column from an offset independently of the engine. */
+  function lineColOf(source: string, offset: number) {
+    const prefix = source.slice(0, offset);
+    return { line: prefix.split("\n").length, column: offset - (prefix.lastIndexOf("\n") + 1) + 1 };
+  }
+
+  test("--json carries a loc that points at the offending source", async () => {
+    const { stdout } = await cli("lint", located, "--json");
+    const { issues } = JSON.parse(stdout).files[0];
+
+    const link = issues.find((i: { rule: string }) => i.rule === "insecure-link");
+    expect(link.loc).toBeDefined();
+    expect(link.loc.line).toBe(9);
+    expect(locatedSource.slice(link.loc.offset, link.loc.offset + link.loc.length)).toBe(
+      'href="http://example.com/track"',
+    );
+
+    const radius = issues.find((i: { rule: string }) => i.rule === "border-radius");
+    expect(radius.loc.line).toBe(4);
+    expect(locatedSource.slice(radius.loc.offset, radius.loc.offset + radius.loc.length)).toBe(
+      "border-radius: 8px",
+    );
+
+    const variable = issues.find((i: { category: string }) => i.category === "templateVars");
+    expect(variable.loc.line).toBe(11);
+  });
+
+  test("every loc in the report is inside the file and self-consistent", async () => {
+    const { stdout } = await cli("lint", located, "--json");
+    const { issues } = JSON.parse(stdout).files[0];
+
+    const located_ = issues.filter((i: { loc?: unknown }) => i.loc);
+    expect(located_.length).toBeGreaterThan(3);
+
+    for (const { loc } of located_) {
+      expect(loc.offset).toBeGreaterThanOrEqual(0);
+      expect(loc.offset + loc.length).toBeLessThanOrEqual(locatedSource.length);
+      expect(lineColOf(locatedSource, loc.offset)).toEqual({ line: loc.line, column: loc.column });
+    }
+  });
+
+  test("the terminal output shows line:col next to each located issue", async () => {
+    const { stdout } = await cli("lint", located);
+
+    expect(stdout).toMatch(/9:6\s+links\s+insecure-link/);
+    expect(stdout).toMatch(/4:13\s+\S*outlook\S*\s+border-radius/);
+  });
+
+  test("document-level findings stay position-free rather than guessing", async () => {
+    const { stdout } = await cli("lint", located, "--json");
+    const { issues } = JSON.parse(stdout).files[0];
+
+    // Nothing in the document points at "the whole document" but the spam and
+    // inbox-preview checks, and they must not invent a line for it.
+    const documentLevel = issues.filter((i: { category: string }) =>
+      ["spam", "inboxPreview", "size"].includes(i.category),
+    );
+    expect(documentLevel.length).toBeGreaterThan(0); // else this test proves nothing
+    for (const issue of documentLevel) expect(issue.loc).toBeUndefined();
+  });
+
+  test("positions are reported for HTML only", () => {
+    // Compiled formats are analyzed as generated HTML, whose lines have nothing
+    // to do with the .tsx/.mjml file the user wrote. A wrong line that looks
+    // authoritative is worse than none.
+    expect(positionsApply("html")).toBe(true);
+    expect(positionsApply("jsx")).toBe(false);
+    expect(positionsApply("mjml")).toBe(false);
+    expect(positionsApply("maizzle")).toBe(false);
   });
 });
