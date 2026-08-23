@@ -5,6 +5,7 @@ import { compile } from "@emailens/engine/compile";
 import {
   auditEmail,
   CompileError,
+  MAX_WARNING_LOCATIONS,
   type AuditReport,
   type SourceLocation,
 } from "@emailens/engine";
@@ -230,13 +231,26 @@ async function resolveGlob(pattern: string): Promise<string[]> {
     .sort();
 }
 
-/** Add occurrences we haven't already recorded, keeping document order. */
-function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined) {
-  if (!from) return;
+/**
+ * Add occurrences we haven't already recorded, keeping document order.
+ *
+ * Grouping unions several engine warnings, each already capped, so the cap has
+ * to be applied again here or a document with many selector shapes produces an
+ * unbounded list. Returns true when it bit, so the issue can say so.
+ */
+function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined): boolean {
+  if (!from) return false;
+  let truncated = false;
   for (const loc of from) {
-    if (!into.some((l) => l.offset === loc.offset)) into.push(loc);
+    if (into.some((l) => l.offset === loc.offset)) continue;
+    if (into.length >= MAX_WARNING_LOCATIONS) {
+      truncated = true;
+      break;
+    }
+    into.push(loc);
   }
   into.sort((a, b) => a.offset - b.offset);
+  return truncated;
 }
 
 /**
@@ -265,7 +279,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         // `span` breaking one property are separate warnings, so union their
         // occurrences to get every place it actually breaks.
         existing.loc ??= w.loc;
-        mergeLocs(existing.locs, w.locs);
+        if (mergeLocs(existing.locs, w.locs)) existing.locsTruncated = true;
         if (w.locsTruncated) existing.locsTruncated = true;
       } else {
         seenProps.set(key, {
@@ -273,7 +287,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
           clients: [w.client],
           message: w.message,
           loc: w.loc,
-          locs: [...(w.locs ?? [])],
+          locs: (w.locs ?? []).slice(0, MAX_WARNING_LOCATIONS),
           ...(w.locsTruncated ? { locsTruncated: true } : {}),
         });
       }

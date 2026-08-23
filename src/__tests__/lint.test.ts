@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { EMAIL_CLIENTS } from "@emailens/engine";
+import { EMAIL_CLIENTS, MAX_WARNING_LOCATIONS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
 import { positionsApply } from "../utils.js";
@@ -318,6 +318,31 @@ describe("lint — source positions", () => {
     expect(issue.locs.map((l: { line: number }) => l.line)).toEqual([2, 3, 4]);
     expect(issue.loc).toEqual(issue.locs[0]);
     expect(issue.locsTruncated).toBeUndefined();
+  });
+
+  test("the occurrence list stays capped when groups are unioned", async () => {
+    // Each engine warning is capped at 100, but lint unions several selector
+    // groups into one issue — without a cap here a generated email produces an
+    // unbounded list, and a consumer can't tell it is partial.
+    const many = join(dir, "many.html");
+    const rows: string[] = [];
+    for (let i = 0; i < 60; i++) {
+      rows.push('  <div style="border-radius:4px">a</div>');
+      rows.push('  <span style="border-radius:4px">b</span>');
+      rows.push('  <p style="border-radius:4px">c</p>');
+    }
+    writeFileSync(
+      many,
+      `<html lang="en"><head><meta charset="utf-8"><title>T</title></head><body>\n${rows.join("\n")}\n</body></html>`,
+    );
+
+    const { stdout } = await cli("lint", many, "--json");
+    const issue = JSON.parse(stdout).files[0].issues.find(
+      (i: { rule: string }) => i.rule === "border-radius",
+    );
+
+    expect(issue.locs).toHaveLength(MAX_WARNING_LOCATIONS);
+    expect(issue.locsTruncated).toBe(true);
   });
 
   test("positions are reported for HTML only", () => {
