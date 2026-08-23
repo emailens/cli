@@ -16,7 +16,9 @@
 
   A patch, not a minor: nothing an existing invocation does changes. `lint` reads a file it did not read before, and only where one exists — and where one does, it was written to say exactly this. A command-line flag still wins, so no pipeline's behaviour moves without someone adding a file that asks it to.
 
-## 0.4.2 — 2026-08-23
+## 0.4.2 — never published
+
+Superseded by 0.4.3 before it reached npm, which goes straight from 0.4.1 to 0.4.3. Everything below is in 0.4.3; the entry stays because the change it describes is real and someone comparing 0.4.1 to 0.4.3 needs to see it.
 
 ### Changed
 
