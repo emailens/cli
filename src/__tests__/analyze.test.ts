@@ -14,7 +14,13 @@ import { join } from "node:path";
 const ENTRY = join(import.meta.dir, "..", "index.ts");
 
 async function cli(...args: string[]) {
-  const proc = Bun.spawn(["bun", ENTRY, ...args], { stdout: "pipe", stderr: "pipe" });
+  // A pipe is not a TTY, so colour ought to be off — but chalk turns it back
+  // on when it sees `CI`, which every runner sets and no developer machine
+  // does. That put ANSI codes between `border-radius` and ` (2:15)` and failed
+  // three assertions on CI alone. These tests are about what the CLI says, not
+  // how it paints it.
+  const env = { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" };
+  const proc = Bun.spawn(["bun", ENTRY, ...args], { stdout: "pipe", stderr: "pipe", env });
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
