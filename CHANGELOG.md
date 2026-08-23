@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 — 2026-08-23
+## 0.4.3 — 2026-08-23
 
 ### Added
 
@@ -13,6 +13,8 @@
   A command-line flag wins over the file, because it is an explicit choice for one invocation. In the editor it is the other way round: the repo's file wins over personal settings, because those are ambient.
 
   `clients` in the file is read by the extension and not yet by `lint`, which has no client filter. Tracked separately.
+
+  A patch, not a minor: nothing an existing invocation does changes. `lint` reads a file it did not read before, and only where one exists — and where one does, it was written to say exactly this. A command-line flag still wins, so no pipeline's behaviour moves without someone adding a file that asks it to.
 
 ## 0.4.2 — 2026-08-23
 
