@@ -1,7 +1,7 @@
 {
   "name": "@emailens/cli",
-  "version": "0.4.1",
-  "description": "CLI tool for email compatibility analysis \u2014 analyze, preview, and export email rendering across 21 email clients.",
+  "version": "0.4.2",
+  "description": "CLI tool for email compatibility analysis — analyze, preview, and export email rendering across 21 email clients.",
   "type": "module",
   "bin": {
     "emailens": "./dist/index.js"
@@ -27,7 +27,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@emailens/engine": "^0.10.2",
+    "@emailens/engine": "^0.10.3",
     "citty": "^0.1.6",
     "cli-table3": "^0.6.5",
     "ora": "^8.2.0",
