@@ -9,6 +9,7 @@ import {
   type AuditReport,
   type SourceLocation,
 } from "@emailens/engine";
+import { applySeverities, loadProjectConfig } from "../project-config.js";
 import { readdir } from "node:fs/promises";
 import { resolve, relative } from "node:path";
 
@@ -73,8 +74,33 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
-      // Parse --skip
+      // `.emailensrc`, the same file the editor extension reads. Without this
+      // a rule demoted in the editor still fails the build, which is the worst
+      // of both: the panel says it does not matter and CI says it does.
+      const project = loadProjectConfig();
+      if (project?.invalid.length && !args.json) {
+        console.error(
+          pc.yellow(
+            `${project.source}: ignoring ${project.invalid.join(", ")} — ` +
+              `a severity must be "error", "warning", "info" or "off".`,
+          ),
+        );
+      }
+
+      // Parse --skip. A flag is an explicit choice for this invocation and
+      // wins over the file; in the editor it is the other way round, because
+      // an editor setting is ambient and the repo's file is the team's.
       const skip: Array<string> = [];
+      if (!args.skip) {
+        for (const s of project?.skip ?? []) {
+          // Named rather than dropped: a team that believes spam checking is
+          // off and finds it is not has been misled by their own config.
+          if (VALID_SKIPS.has(s)) skip.push(s);
+          else if (!args.json) {
+            console.error(pc.yellow(`${project?.source}: unknown skip value "${s}", ignoring.`));
+          }
+        }
+      }
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -122,7 +148,7 @@ export default defineCommand({
           positions,
         });
 
-        const issues = flattenToLintIssues(report, skip);
+        const issues = applySeverities(flattenToLintIssues(report, skip), project?.rules);
         const errors = issues.filter((i) => i.severity === "error").length;
         const warnings = issues.filter((i) => i.severity === "warning").length;
 

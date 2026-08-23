@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — 2026-08-23
+
+### Added
+
+- **`.emailensrc`, the project file the VS Code extension already reads.** At the repo root, or as an `emailens` key in `package.json`. `lint` now reads `skip` and `rules` from it, so the editor and CI stop disagreeing — a rule demoted in the Problems panel that still fails the build is the worst of both, because one says it does not matter and the other says it does.
+
+- **`rules`: severity per rule.** Keyed by the code `lint` prints — a CSS property (`border-radius`) or a rule id (`insecure-link`) — and set to `error`, `warning`, `info` or `off`. Promoting one to `error` makes it exit 1, which is the point of the feature. Without it the only control was `--skip`, so a team that cared about one Outlook property had to keep the entire compatibility check at warning level, and a team that could not fix every `info` today had to switch accessibility off rather than demote a rule.
+
+  A severity that is not one of the four is named on stderr and ignored rather than dropped in silence: a rule someone believes is off but is not is worse than no setting at all. Those warnings go to stderr, so `lint --json | jq` stays parseable. A malformed file is linted without rather than being fatal.
+
+  A command-line flag wins over the file, because it is an explicit choice for one invocation. In the editor it is the other way round: the repo's file wins over personal settings, because those are ambient.
+
+  `clients` in the file is read by the extension and not yet by `lint`, which has no client filter. Tracked separately.
+
 ## 0.4.2 — 2026-08-23
 
 ### Changed

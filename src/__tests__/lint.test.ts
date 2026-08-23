@@ -362,3 +362,105 @@ describe("lint — source positions", () => {
     expect(positionsApply("maizzle")).toBe(false);
   });
 });
+
+describe("lint — .emailensrc", () => {
+  /**
+   * The file the editor extension already reads. A rule demoted there that
+   * still fails the build is the worst of both: the Problems panel says it
+   * does not matter and CI says it does.
+   *
+   * The exit code is what these assert, because that is what a pipeline
+   * branches on. The config is found by walking up from the working
+   * directory, so each case gets its own directory and runs the CLI in it.
+   */
+  async function lintIn(cwd: string, ...args: string[]) {
+    const env = { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" };
+    const proc = Bun.spawn(["bun", ENTRY, "lint", ...args], {
+      cwd,
+      stdout: "pipe",
+      stderr: "pipe",
+      env,
+    });
+    const [stdout, stderr] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ]);
+    return { exitCode: await proc.exited, stdout, stderr };
+  }
+
+  /** A directory holding one email and, optionally, a config beside it. */
+  function project(config?: string): string {
+    const at = mkdtempSync(join(tmpdir(), "emailens-rc-"));
+    writeFileSync(
+      join(at, "email.html"),
+      `${HEAD}<a href="http://example.com/track">Track</a>${FOOT}`,
+    );
+    if (config !== undefined) writeFileSync(join(at, ".emailensrc"), config);
+    return at;
+  }
+
+  test("without a config the insecure link is reported", async () => {
+    const at = project();
+    const { stdout } = await lintIn(at, "email.html");
+    expect(stdout).toContain("insecure-link");
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("promoting a rule to error changes the exit code", async () => {
+    // The whole point: `emailens.rules` in the editor and `.emailensrc` in CI
+    // are the same decision, and this is where it becomes a failing build.
+    const before = project();
+    expect((await lintIn(before, "email.html")).exitCode).not.toBe(1);
+    rmSync(before, { recursive: true, force: true });
+
+    const at = project('{"rules":{"insecure-link":"error"}}');
+    const { exitCode, stdout } = await lintIn(at, "email.html");
+    expect(stdout).toContain("insecure-link");
+    expect(exitCode).toBe(1);
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("off removes the finding entirely", async () => {
+    const at = project('{"rules":{"insecure-link":"off"}}');
+    const { stdout } = await lintIn(at, "email.html");
+    expect(stdout).not.toContain("insecure-link");
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("a misspelled severity is named on stderr rather than ignored", async () => {
+    const at = project('{"rules":{"insecure-link":"eror"}}');
+    const { stdout, stderr } = await lintIn(at, "email.html");
+    expect(stderr).toContain("insecure-link");
+    expect(stderr).toMatch(/"error", "warning", "info" or "off"/);
+    // And the rule still fires, because nothing valid asked it not to.
+    expect(stdout).toContain("insecure-link");
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("skip in the file works, and --skip on the command line wins", async () => {
+    const at = project('{"skip":["links"]}');
+    expect((await lintIn(at, "email.html")).stdout).not.toContain("insecure-link");
+    // A flag is an explicit choice for this invocation; the file is ambient.
+    // Skipping something else means links are checked again.
+    expect((await lintIn(at, "email.html", "--skip", "spam")).stdout).toContain("insecure-link");
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("a malformed config lints without it rather than failing", async () => {
+    const at = project("{ not json");
+    const { stdout, exitCode } = await lintIn(at, "email.html");
+    expect(stdout).toContain("insecure-link");
+    expect(exitCode).not.toBe(2);
+    rmSync(at, { recursive: true, force: true });
+  });
+
+  test("JSON output stays parseable when the config has complaints", async () => {
+    // The warnings go to stderr for exactly this reason: a pipeline doing
+    // `emailens lint --json | jq` must not be handed prose on stdout.
+    const at = project('{"rules":{"insecure-link":"eror"}}');
+    const { stdout, stderr } = await lintIn(at, "email.html", "--json");
+    expect(() => JSON.parse(stdout)).not.toThrow();
+    expect(stderr).toBe("");
+    rmSync(at, { recursive: true, force: true });
+  });
+});

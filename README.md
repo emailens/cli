@@ -189,6 +189,41 @@ jobs:
 
 For React Email / MJML / Maizzle source files, the CLI auto-detects the format from the extension. Want full preview reports (with screenshots and shareable links) on every PR? Use the [Emailens GitHub Action](https://github.com/marketplace/actions/emailens-email-preview-check) instead — it wraps the same engine.
 
+### `.emailensrc`
+
+The project file the [VS Code extension](https://github.com/emailens/vscode)
+already reads, so the editor and CI agree about what matters. Put it at the
+repo root, or use an `emailens` key in `package.json`:
+
+```json
+{
+  "skip": ["spam"],
+  "rules": {
+    "border-radius": "error",
+    "font-size": "off"
+  }
+}
+```
+
+**`rules`** sets the severity of one rule, keyed by the code `lint` prints — a
+CSS property (`border-radius`) or a rule id (`insecure-link`). `off` drops it
+entirely. Promoting a rule to `error` makes it exit 1, which is the point:
+without this the only control is `--skip`, and a team that cares about one
+Outlook property has to keep the whole compatibility check at warning level.
+
+A rule demoted in the editor that still fails the build is the worst of both
+worlds, and this is the file that stops that happening.
+
+**Precedence.** A command-line flag wins over the file — it is an explicit
+choice for one invocation. In the editor it is the other way round: the repo's
+file wins over personal settings, because those are ambient and the file is
+the team's.
+
+A malformed file is linted without rather than fatal. A severity that is not
+one of `error`, `warning`, `info`, `off` is named on stderr and ignored, so a
+typo cannot quietly leave a rule on that you believe is off. Warnings go to
+stderr, so `lint --json | jq` stays parseable.
+
 ### `emailens clients`
 
 List all 21 supported email clients.
