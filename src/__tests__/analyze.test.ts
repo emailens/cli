@@ -55,7 +55,9 @@ describe("analyze — source positions", () => {
     expect(warning.locs).toHaveLength(2);
     expect(warning.locs.map((l: { line: number }) => l.line)).toEqual([4, 6]);
     for (const loc of warning.locs) {
-      expect(source.slice(loc.offset, loc.offset + loc.length)).toBe('style="border-radius:8px"');
+      // The declaration, not the attribute around it: engine 0.10.3 narrowed
+      // this, so `emailens analyze` now points at the characters to change.
+      expect(source.slice(loc.offset, loc.offset + loc.length)).toBe("border-radius:8px");
     }
     expect(warning.loc).toEqual(warning.locs[0]);
   });
@@ -68,19 +70,19 @@ describe("analyze — source positions", () => {
       (w: { property: string }) => w.property === "border-radius",
     );
     const second = warning.locs[1];
-    expect(second.offset).toBe(source.lastIndexOf('style="border-radius:8px"'));
+    expect(second.offset).toBe(source.lastIndexOf("border-radius:8px"));
   });
 
   test("the terminal output says where, and how many others", async () => {
     const { stdout } = await cli("analyze", file, "-c", "outlook-windows");
-    expect(stdout).toMatch(/border-radius \(4:8 \+1 more\)/);
+    expect(stdout).toMatch(/border-radius \(4:15 \+1 more\)/);
   });
 
   test("a single occurrence prints a position with no count", async () => {
     const one = join(dir, "one.html");
     writeFileSync(one, '<html lang="en"><body>\n  <div style="border-radius:8px">a</div>\n</body></html>');
     const { stdout } = await cli("analyze", one, "-c", "outlook-windows");
-    expect(stdout).toMatch(/border-radius \(2:8\)/);
+    expect(stdout).toMatch(/border-radius \(2:15\)/);
     expect(stdout).not.toMatch(/more\)/);
   });
 });

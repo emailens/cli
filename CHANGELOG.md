@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2 — 2026-08-23
+
+### Changed
+
+- **A position now points at the declaration, not the whole `style="…"` attribute.** `border-radius (2:8)` becomes `border-radius (2:15)` — the column of `border-radius:8px` inside the attribute rather than the column of `style=`. Same for `loc` and `locs` in `--json`. Comes from `@emailens/engine` 0.10.3, and the dependency is pinned there because these positions are what the suite asserts.
+
+  Worth knowing if you were already on 0.4.1: its range was `^0.10.2`, so anyone installing it after the engine's release already got this. This release is the version that tests against it.
+
 ## 0.4.1 — 2026-08-23
 
 ### Added
