@@ -13,7 +13,9 @@
 
 </div>
 
-CLI tool for email compatibility analysis — preview how HTML emails render across 21 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Proton Mail, AOL, Fastmail, Superhuman).
+CLI tool for email compatibility analysis — preview how your emails render across 21 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Proton Mail, AOL, Fastmail, Superhuman).
+
+Point it at **HTML, MJML, Maizzle or React Email**. The format is detected from the file extension, the template is compiled with your project's own compiler, and what gets linted is the HTML your readers actually receive.
 
 Across the 255 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 249 before your users do.
 

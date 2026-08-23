@@ -1,7 +1,7 @@
 {
   "name": "@emailens/cli",
   "version": "0.4.2",
-  "description": "CLI tool for email compatibility analysis — analyze, preview, and export email rendering across 21 email clients.",
+  "description": "CLI tool for email compatibility analysis: lint, preview and export HTML, MJML, Maizzle and React Email rendering across 21 email clients.",
   "type": "module",
   "bin": {
     "emailens": "./dist/index.js"
@@ -55,7 +55,10 @@
     "outlook",
     "apple-mail",
     "email-testing",
-    "dark-mode"
+    "dark-mode",
+    "mjml",
+    "maizzle",
+    "react-email"
   ],
   "license": "MIT",
   "repository": {
