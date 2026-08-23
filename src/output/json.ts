@@ -1,4 +1,4 @@
-import type { CSSWarning, TransformResult } from "@emailens/engine";
+import type { CSSWarning, SourceLocation, TransformResult } from "@emailens/engine";
 
 interface JsonOutput {
   overallScore: number;
@@ -15,6 +15,12 @@ interface JsonOutput {
       language: string;
       description: string;
     };
+    /** First occurrence in the source. HTML input only. */
+    loc?: SourceLocation;
+    /** Every occurrence, in document order. */
+    locs?: SourceLocation[];
+    /** `locs` is capped and does not list every occurrence. */
+    locsTruncated?: boolean;
   }>;
   transforms?: Array<{
     clientId: string;
@@ -55,6 +61,9 @@ export function formatJsonOutput(opts: {
         language: w.fix.language,
         description: w.fix.description,
       } : undefined,
+      loc: w.loc,
+      locs: w.locs,
+      locsTruncated: w.locsTruncated,
     })),
   };
 

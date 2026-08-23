@@ -1,11 +1,13 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { readInput, resolveFormat, toFramework } from "../utils.js";
+import { positionsApply, readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import {
   auditEmail,
   CompileError,
+  MAX_WARNING_LOCATIONS,
   type AuditReport,
+  type SourceLocation,
 } from "@emailens/engine";
 import { readdir } from "node:fs/promises";
 import { resolve, relative } from "node:path";
@@ -16,6 +18,12 @@ interface LintIssue {
   rule: string;
   message: string;
   detail?: string;
+  /** Where in the file the issue is. HTML sources only — see `positionsApply`. */
+  loc?: SourceLocation;
+  /** Every place a CSS property breaks, in document order. */
+  locs?: SourceLocation[];
+  /** `locs` is capped and does not list every occurrence. */
+  locsTruncated?: boolean;
 }
 
 interface LintFileResult {
@@ -102,9 +110,16 @@ export default defineCommand({
         const html = await compile(source, format);
         const framework = toFramework(format);
 
+        // Positions describe the HTML that was analyzed. For jsx/mjml/maizzle
+        // that is compiled output whose lines have nothing to do with the file
+        // the user wrote, so we only ask for — and only report — positions when
+        // the source IS the analyzed HTML.
+        const positions = positionsApply(format);
+
         const report = auditEmail(html, {
           framework,
           skip: skip as AuditSkipType[],
+          positions,
         });
 
         const issues = flattenToLintIssues(report, skip);
@@ -125,13 +140,22 @@ export default defineCommand({
           if (result.issues.length === 0) {
             console.log(`  ${pc.green("pass")}  No issues found`);
           } else {
+            // Only reserve the position column when this file has positions to
+            // show — compiled sources never do.
+            const width = result.issues.reduce(
+              (w, i) => (i.loc ? Math.max(w, `${i.loc.line}:${i.loc.column}`.length) : w),
+              0,
+            );
             for (const issue of result.issues) {
               const sev = issue.severity === "error"
                 ? pc.red("error")
                 : issue.severity === "warning"
                   ? pc.yellow("warn ")
                   : pc.blue("info ");
-              console.log(`  ${sev}  ${pc.dim(issue.category.padEnd(18))}  ${pc.bold(issue.rule.padEnd(22))}  ${issue.message}`);
+              const pos = width > 0
+                ? `${pc.dim((issue.loc ? `${issue.loc.line}:${issue.loc.column}` : "").padStart(width))}  `
+                : "";
+              console.log(`  ${sev}  ${pos}${pc.dim(issue.category.padEnd(18))}  ${pc.bold(issue.rule.padEnd(22))}  ${issue.message}`);
             }
           }
           console.log();
@@ -176,6 +200,7 @@ export default defineCommand({
 
 type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual";
 
+
 /**
  * Resolve a file path or simple glob pattern to an array of files.
  * Supports basic * glob in the last path segment.
@@ -207,6 +232,28 @@ async function resolveGlob(pattern: string): Promise<string[]> {
 }
 
 /**
+ * Add occurrences we haven't already recorded, keeping document order.
+ *
+ * Grouping unions several engine warnings, each already capped, so the cap has
+ * to be applied again here or a document with many selector shapes produces an
+ * unbounded list. Returns true when it bit, so the issue can say so.
+ */
+function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined): boolean {
+  if (!from) return false;
+  let truncated = false;
+  for (const loc of from) {
+    if (into.some((l) => l.offset === loc.offset)) continue;
+    if (into.length >= MAX_WARNING_LOCATIONS) {
+      truncated = true;
+      break;
+    }
+    into.push(loc);
+  }
+  into.sort((a, b) => a.offset - b.offset);
+  return truncated;
+}
+
+/**
  * Flatten an AuditReport into a unified LintIssue array.
  */
 function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
@@ -214,18 +261,34 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
 
   // CSS compatibility warnings → group by property (deduplicate across clients)
   if (!skip.includes("compatibility")) {
-    const seenProps = new Map<string, { severity: "error" | "warning" | "info"; clients: string[]; message: string }>();
+    const seenProps = new Map<string, {
+      severity: "error" | "warning" | "info";
+      clients: string[];
+      message: string;
+      loc?: SourceLocation;
+      locs: SourceLocation[];
+      locsTruncated?: boolean;
+    }>();
 
     for (const w of report.compatibility.warnings) {
       const key = `${w.property}\0${w.severity}`;
       const existing = seenProps.get(key);
       if (existing) {
         existing.clients.push(w.client);
+        // Clients repeat the same finding, but selector groups don't: `div` and
+        // `span` breaking one property are separate warnings, so union their
+        // occurrences to get every place it actually breaks.
+        existing.loc ??= w.loc;
+        if (mergeLocs(existing.locs, w.locs)) existing.locsTruncated = true;
+        if (w.locsTruncated) existing.locsTruncated = true;
       } else {
         seenProps.set(key, {
           severity: w.severity,
           clients: [w.client],
           message: w.message,
+          loc: w.loc,
+          locs: (w.locs ?? []).slice(0, MAX_WARNING_LOCATIONS),
+          ...(w.locsTruncated ? { locsTruncated: true } : {}),
         });
       }
     }
@@ -237,6 +300,9 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: val.clients.slice(0, 3).join(",") + (val.clients.length > 3 ? `+${val.clients.length - 3}` : ""),
         rule: property,
         message: val.message,
+        ...(val.loc ? { loc: val.loc } : {}),
+        ...(val.locs.length ? { locs: val.locs } : {}),
+        ...(val.locsTruncated ? { locsTruncated: true } : {}),
       });
     }
   }
@@ -249,6 +315,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         rule: issue.rule,
         message: issue.message,
         detail: issue.detail,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -260,6 +327,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "links",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -271,6 +339,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "accessibility",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -282,6 +351,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "images",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -293,6 +363,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "inboxPreview",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -304,6 +375,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "size",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -315,6 +387,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "templateVars",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -326,6 +399,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "overflow",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }
@@ -337,6 +411,7 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "visual",
         rule: issue.rule,
         message: issue.message,
+        ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
   }

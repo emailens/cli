@@ -106,6 +106,17 @@ export function printScoreTable(
 }
 
 /**
+ * Where the warning fires: the first position, and how many others share it.
+ * Empty for compiled sources and document-level findings, which have none.
+ */
+function formatWhere(w: CSSWarning): string {
+  if (!w.loc) return "";
+  const more = (w.locs?.length ?? 1) - 1;
+  const extra = more > 0 ? ` +${more}${w.locsTruncated ? "+" : ""} more` : "";
+  return pc.dim(` (${w.loc.line}:${w.loc.column}${extra})`);
+}
+
+/**
  * Print detailed warnings grouped by client.
  */
 export function printWarnings(
@@ -137,7 +148,7 @@ export function printWarnings(
 
     for (const w of clientWarnings) {
       const prop = pc.dim(w.property);
-      console.log(`    ${severityIcon(w.severity)} ${prop} — ${w.message}`);
+      console.log(`    ${severityIcon(w.severity)} ${prop}${formatWhere(w)} — ${w.message}`);
       if (w.suggestion) {
         console.log(`      ${pc.dim("→")} ${w.suggestion}`);
       }

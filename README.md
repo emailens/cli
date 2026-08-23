@@ -46,6 +46,17 @@ emailens analyze email.html --json
 cat email.html | emailens analyze -
 ```
 
+Warnings show where the property is used, and how many other places share the
+problem:
+
+```
+  ⚠ Outlook (New) (1 issue)
+    ⚠ border-radius (4:8 +2 more) — Outlook (New) does not support "border-radius".
+```
+
+`--json` carries the full `loc` / `locs` for each warning. As with `lint`,
+positions are reported for HTML input only — see below.
+
 ### `emailens preview <file>`
 
 Full preview pipeline: transforms, analysis, dark mode simulation, and optional screenshots.
@@ -123,14 +134,30 @@ emailens lint email.html --max-warnings 5
 
 ```
 src/emails/welcome.html
-  error  outlook-windows     border-radius           Not supported in Outlook Windows
-  warn   spam                caps-ratio              20%+ of words are ALL CAPS
+  error  12:8  outlook-windows     border-radius           Not supported in Outlook Windows
+  warn         spam                caps-ratio              20%+ of words are ALL CAPS
 
 src/emails/newsletter.html
   pass   No issues found
 
 2 files | 1 error | 1 warning
 ```
+
+Issues that belong to a specific place in the file carry a `line:col`; findings
+about the document as a whole (spam signals, Gmail clipping, inbox preview) have
+no position and leave the column blank. With `--json`, each issue carries a
+`loc` object instead — `line`, `column`, `endLine`, `endColumn`, `offset`,
+`length` — for editors, annotations, and agents that need to point at or edit
+the exact source.
+
+One property can break in many places, so CSS issues also carry `locs`: every
+occurrence in document order, with `loc` as the first, and `locsTruncated: true`
+when there were more than 100.
+
+Positions are reported for **HTML sources only**. JSX, MJML and Maizzle are
+compiled before analysis, so a line number would refer to generated output
+rather than the file you wrote; the CLI omits it rather than print one that
+looks authoritative and isn't.
 
 #### CI / GitHub Actions
 
