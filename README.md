@@ -7,6 +7,7 @@
 
 **The rendering linter for email, in your terminal**
 
+[![CI](https://github.com/emailens/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/emailens/cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@emailens/cli)](https://www.npmjs.com/package/@emailens/cli)
 [![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/emailens/mcp)
 [![GitHub stars](https://img.shields.io/github/stars/emailens/cli?style=flat)](https://github.com/emailens/cli/stargazers)
