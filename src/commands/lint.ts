@@ -19,7 +19,7 @@ interface LintIssue {
   rule: string;
   message: string;
   detail?: string;
-  /** Where in the file the issue is. HTML sources only — see `positionsApply`. */
+  /** Where in the file the issue is. HTML sources only, see `positionsApply`. */
   loc?: SourceLocation;
   /** Every place a CSS property breaks, in document order. */
   locs?: SourceLocation[];
@@ -81,7 +81,7 @@ export default defineCommand({
       if (project?.invalid.length && !args.json) {
         console.error(
           pc.yellow(
-            `${project.source}: ignoring ${project.invalid.join(", ")} — ` +
+            `${project.source}: ignoring ${project.invalid.join(", ")}, ` +
               `a severity must be "error", "warning", "info" or "off".`,
           ),
         );
@@ -138,7 +138,7 @@ export default defineCommand({
 
         // Positions describe the HTML that was analyzed. For jsx/mjml/maizzle
         // that is compiled output whose lines have nothing to do with the file
-        // the user wrote, so we only ask for — and only report — positions when
+        // the user wrote, so we only ask for, and only report, positions when
         // the source IS the analyzed HTML.
         const positions = positionsApply(format);
 
@@ -167,7 +167,7 @@ export default defineCommand({
             console.log(`  ${pc.green("pass")}  No issues found`);
           } else {
             // Only reserve the position column when this file has positions to
-            // show — compiled sources never do.
+            // show; compiled sources never do.
             const width = result.issues.reduce(
               (w, i) => (i.loc ? Math.max(w, `${i.loc.line}:${i.loc.column}`.length) : w),
               0,
@@ -237,7 +237,7 @@ async function resolveGlob(pattern: string): Promise<string[]> {
     return [resolve(pattern)];
   }
 
-  // Recursive glob is not supported — provide clear error
+  // Recursive glob is not supported: provide clear error
   if (pattern.includes("**")) {
     throw new Error("Recursive glob (**) is not supported. Use a single-level wildcard (e.g., src/*.html) or list files explicitly.");
   }

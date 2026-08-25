@@ -7,7 +7,7 @@ import { dirname, join, parse } from "node:path";
  * A severity policy is a team decision, and a team decision that lives in one
  * person's editor settings is one CI disagrees with. The extension has read
  * this file since it shipped; the CLI reading the same keys is what makes the
- * two agree — a rule demoted in the editor and still failing the build is the
+ * two agree: a rule demoted in the editor and still failing the build is the
  * worst of both.
  *
  * Precedence here is the other way round from the editor's, deliberately. A

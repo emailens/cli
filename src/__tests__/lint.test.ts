@@ -11,7 +11,7 @@ import { positionsApply } from "../utils.js";
  * End-to-end tests for `emailens lint`.
  *
  * The exit code IS the product here: every CI pipeline using this CLI branches
- * on it. A lint that wrongly exits 0 does not fail loudly, it fails silently —
+ * on it. A lint that wrongly exits 0 does not fail loudly, it fails silently,
  * the build goes green and the broken email ships. Nothing protected that
  * contract before these tests, so they run the real binary and assert on the
  * real exit status rather than unit-testing around it.
@@ -29,7 +29,7 @@ let locatedSource: string;
 async function cli(...args: string[]) {
   // `bun ENTRY`, not `bun run ENTRY`: `bun run` swallows flags it recognises as
   // its own (--version among them) before the script ever sees them.
-  // A pipe is not a TTY, so colour ought to be off — but chalk turns it back
+  // A pipe is not a TTY, so colour ought to be off, but chalk turns it back
   // on when it sees `CI`, which every runner sets and no developer machine
   // does. That put ANSI codes between `border-radius` and ` (2:15)` and failed
   // three assertions on CI alone. These tests are about what the CLI says, not
@@ -65,7 +65,7 @@ beforeAll(() => {
     ${FOOT}`,
   );
 
-  // position: absolute is unsupported in most clients — warnings, never errors.
+  // position: absolute is unsupported in most clients; warnings, never errors.
   warns = join(dir, "warns.html");
   writeFileSync(
     warns,
@@ -95,7 +95,7 @@ beforeAll(() => {
   located = join(dir, "located.html");
   writeFileSync(located, locatedSource);
 
-  // An empty mailto: is an error — the link is simply broken.
+  // An empty mailto: is an error; the link is simply broken.
   errors = join(dir, "errors.html");
   writeFileSync(
     errors,
@@ -110,13 +110,13 @@ afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-describe("lint — exit codes (the CI contract)", () => {
+describe("lint: exit codes (the CI contract)", () => {
   test("errors exit 1", async () => {
     const { exitCode } = await cli("lint", errors, "--json");
     expect(exitCode).toBe(1);
   });
 
-  test("warnings alone exit 0 — a warning is not a build break", async () => {
+  test("warnings alone exit 0: a warning is not a build break", async () => {
     const { exitCode, stdout } = await cli("lint", warns, "--json");
     const report = JSON.parse(stdout);
 
@@ -161,7 +161,7 @@ describe("lint — exit codes (the CI contract)", () => {
   });
 });
 
-describe("lint — JSON contract (what CI parses)", () => {
+describe("lint: JSON contract (what CI parses)", () => {
   test("--json emits parseable JSON with the documented shape", async () => {
     const { stdout } = await cli("lint", errors, "--json");
     const report = JSON.parse(stdout);
@@ -203,7 +203,7 @@ describe("lint — JSON contract (what CI parses)", () => {
   });
 });
 
-describe("lint — failure paths report rather than crash", () => {
+describe("lint: failure paths report rather than crash", () => {
   test("a missing file exits 1 with a message, not a stack trace", async () => {
     const { exitCode, stderr } = await cli("lint", join(dir, "nope.html"));
 
@@ -214,7 +214,7 @@ describe("lint — failure paths report rather than crash", () => {
 
   test("an unknown --skip value is rejected, not silently ignored", async () => {
     // Silently ignoring it would mean the user believes a check ran when it did
-    // not — the same class of failure as a lint that always exits 0.
+    // not, the same class of failure as a lint that always exits 0.
     const { exitCode, stderr } = await cli("lint", clean, "--skip", "spelling");
 
     expect(exitCode).toBe(1);
@@ -233,7 +233,7 @@ describe("cli metadata", () => {
   test("the reported version matches package.json", () => {
     // It did not: index.ts hardcoded 0.4.0 while the package was 0.3.4, so
     // anyone filing a bug would have quoted a version that never shipped.
-    // Asserted against meta rather than the binary — testing it through the
+    // Asserted against meta rather than the binary: testing it through the
     // process means racing citty's process.exit() against the stdout flush.
     expect(meta.version).toBe(pkg.version);
   });
@@ -244,7 +244,7 @@ describe("cli metadata", () => {
   });
 });
 
-describe("lint — source positions", () => {
+describe("lint: source positions", () => {
   /** Derive line/column from an offset independently of the engine. */
   function lineColOf(source: string, offset: number) {
     const prefix = source.slice(0, offset);
@@ -329,7 +329,7 @@ describe("lint — source positions", () => {
 
   test("the occurrence list stays capped when groups are unioned", async () => {
     // Each engine warning is capped at 100, but lint unions several selector
-    // groups into one issue — without a cap here a generated email produces an
+    // groups into one issue, without a cap here a generated email produces an
     // unbounded list, and a consumer can't tell it is partial.
     const many = join(dir, "many.html");
     const rows: string[] = [];
@@ -363,7 +363,7 @@ describe("lint — source positions", () => {
   });
 });
 
-describe("lint — .emailensrc", () => {
+describe("lint: .emailensrc", () => {
   /**
    * The file the editor extension already reads. A rule demoted there that
    * still fails the build is the worst of both: the Problems panel says it

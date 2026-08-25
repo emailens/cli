@@ -13,5 +13,5 @@ import pkg from "../package.json" with { type: "json" };
 export const meta = {
   name: "emailens",
   version: pkg.version,
-  description: `Email compatibility analysis CLI — preview how HTML emails render across ${EMAIL_CLIENTS.length} email clients.`,
+  description: `Email compatibility analysis CLI; preview how HTML emails render across ${EMAIL_CLIENTS.length} email clients.`,
 } as const;

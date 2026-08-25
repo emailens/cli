@@ -33,7 +33,7 @@ export function generateHtmlReport(opts: {
         const color = w.severity === "error" ? "#ef4444" : w.severity === "warning" ? "#eab308" : "#3b82f6";
         return `<div style="padding:4px 0;border-bottom:1px solid #f1f1f1">
           <span style="color:${color}">${icon}</span>
-          <strong>${escapeHtml(w.property)}</strong> — ${escapeHtml(w.message)}
+          <strong>${escapeHtml(w.property)}</strong>, ${escapeHtml(w.message)}
           ${w.suggestion ? `<br><span style="color:#888;margin-left:20px">&rarr; ${escapeHtml(w.suggestion)}</span>` : ""}
         </div>`;
       }).join("");

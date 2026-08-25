@@ -116,25 +116,25 @@ function printQualitySummary(
   if (!skip.includes("spam")) {
     const { score, level, issues } = report.spam;
     const color = score >= 90 ? pc.green : score >= 70 ? pc.yellow : pc.red;
-    table.push(["Content Hygiene", `${color(String(score))}/100 (${level}) — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
+    table.push(["Content Hygiene", `${color(String(score))}/100 (${level}), ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
   }
 
   if (!skip.includes("links")) {
     const { totalLinks, issues } = report.links;
     const color = issues.length === 0 ? pc.green : pc.yellow;
-    table.push(["Links", `${totalLinks} link${totalLinks === 1 ? "" : "s"} — ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
+    table.push(["Links", `${totalLinks} link${totalLinks === 1 ? "" : "s"}, ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
   }
 
   if (!skip.includes("accessibility")) {
     const { score, issues } = report.accessibility;
     const color = score >= 90 ? pc.green : score >= 70 ? pc.yellow : pc.red;
-    table.push(["Accessibility", `${color(String(score))}/100 — ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
+    table.push(["Accessibility", `${color(String(score))}/100, ${issues.length} issue${issues.length === 1 ? "" : "s"}`]);
   }
 
   if (!skip.includes("images")) {
     const { total, issues } = report.images;
     const color = issues.length === 0 ? pc.green : pc.yellow;
-    table.push(["Images", `${total} image${total === 1 ? "" : "s"} — ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
+    table.push(["Images", `${total} image${total === 1 ? "" : "s"}, ${color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)}`]);
   }
 
   if (!skip.includes("overflow")) {

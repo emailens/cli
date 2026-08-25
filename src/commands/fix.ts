@@ -80,7 +80,7 @@ export default defineCommand({
         if (args.json) {
           console.log(JSON.stringify({ message: "No issues found", code: source }, null, 2));
         } else {
-          console.log(pc.green("\n  No compatibility issues found — nothing to fix.\n"));
+          console.log(pc.green("\n  No compatibility issues found, nothing to fix.\n"));
         }
         return;
       }

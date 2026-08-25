@@ -14,7 +14,7 @@
 
 </div>
 
-CLI tool for email compatibility analysis — preview how your emails render across 21 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Proton Mail, AOL, Fastmail, Superhuman).
+CLI tool for email compatibility analysis; preview how your emails render across 21 email clients (Gmail, Outlook, Apple Mail, Yahoo, Samsung, Thunderbird, HEY, Proton Mail, AOL, Fastmail, Superhuman).
 
 Point it at **HTML, MJML, Maizzle or React Email**. The format is detected from the file extension, the template is compiled with your project's own compiler, and what gets linted is the HTML your readers actually receive.
 
@@ -22,7 +22,7 @@ Across the 255 CSS and HTML features we track, only 6 are fully supported in eve
 
 ![emailens lint output showing errors and warnings across email clients](./docs/lint-demo.png)
 
-> **Prefer AI?** Use the [MCP server](https://github.com/emailens/mcp) — same engine, works with Claude, Cursor, and any MCP client.
+> **Prefer AI?** Use the [MCP server](https://github.com/emailens/mcp); same engine, works with Claude, Cursor, and any MCP client.
 
 ## Install
 
@@ -54,11 +54,11 @@ problem:
 
 ```
   ⚠ Outlook (New) (1 issue)
-    ⚠ border-radius (4:8 +2 more) — Outlook (New) does not support "border-radius".
+    ⚠ border-radius (4:8 +2 more): Outlook (New) does not support "border-radius".
 ```
 
 `--json` carries the full `loc` / `locs` for each warning. As with `lint`,
-positions are reported for HTML input only — see below.
+positions are reported for HTML input only, see below.
 
 ### `emailens preview <file>`
 
@@ -129,9 +129,9 @@ emailens lint email.html --max-warnings 5
 | `--max-warnings` | | Fail if more than n warnings |
 
 **Exit codes:**
-- `0` — clean
-- `1` — errors found
-- `2` — warnings only (with `--fail-on-warning` or `--max-warnings` exceeded)
+- `0`: clean
+- `1`: errors found
+- `2`: warnings only (with `--fail-on-warning` or `--max-warnings` exceeded)
 
 **Output format:**
 
@@ -149,8 +149,8 @@ src/emails/newsletter.html
 Issues that belong to a specific place in the file carry a `line:col`; findings
 about the document as a whole (spam signals, Gmail clipping, inbox preview) have
 no position and leave the column blank. With `--json`, each issue carries a
-`loc` object instead — `line`, `column`, `endLine`, `endColumn`, `offset`,
-`length` — for editors, annotations, and agents that need to point at or edit
+`loc` object instead (`line`, `column`, `endLine`, `endColumn`, `offset`,
+`length`) for editors, annotations, and agents that need to point at or edit
 the exact source.
 
 One property can break in many places, so CSS issues also carry `locs`: every
@@ -187,7 +187,7 @@ jobs:
         run: npx -y @emailens/cli lint 'emails/**/*.{html,tsx,mjml}' --fail-on-warning
 ```
 
-For React Email / MJML / Maizzle source files, the CLI auto-detects the format from the extension. Want full preview reports (with screenshots and shareable links) on every PR? Use the [Emailens GitHub Action](https://github.com/marketplace/actions/emailens-email-preview-check) instead — it wraps the same engine.
+For React Email / MJML / Maizzle source files, the CLI auto-detects the format from the extension. Want full preview reports (with screenshots and shareable links) on every PR? Use the [Emailens GitHub Action](https://github.com/marketplace/actions/emailens-email-preview-check) instead; it wraps the same engine.
 
 ### `.emailensrc`
 
@@ -205,7 +205,7 @@ repo root, or use an `emailens` key in `package.json`:
 }
 ```
 
-**`rules`** sets the severity of one rule, keyed by the code `lint` prints — a
+**`rules`** sets the severity of one rule, keyed by the code `lint` prints: a
 CSS property (`border-radius`) or a rule id (`insecure-link`). `off` drops it
 entirely. Promoting a rule to `error` makes it exit 1, which is the point:
 without this the only control is `--skip`, and a team that cares about one
@@ -214,7 +214,7 @@ Outlook property has to keep the whole compatibility check at warning level.
 A rule demoted in the editor that still fails the build is the worst of both
 worlds, and this is the file that stops that happening.
 
-**Precedence.** A command-line flag wins over the file — it is an explicit
+**Precedence.** A command-line flag wins over the file; it is an explicit
 choice for one invocation. In the editor it is the other way round: the repo's
 file wins over personal settings, because those are ambient and the file is
 the team's.
@@ -280,7 +280,7 @@ emailens analyze template.mjml               # Auto-detected as MJML
 emailens preview email.html --format maizzle # Explicit format
 ```
 
-Framework compilers are optional peer dependencies — install only what you need:
+Framework compilers are optional peer dependencies; install only what you need:
 
 ```bash
 npm install sucrase react @react-email/components @react-email/render  # For JSX

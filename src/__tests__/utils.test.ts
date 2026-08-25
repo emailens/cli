@@ -49,7 +49,7 @@ describe("resolveFormat", () => {
 });
 
 describe("toFramework", () => {
-  test("html has no framework — it is not a compile target", () => {
+  test("html has no framework: it is not a compile target", () => {
     expect(toFramework("html")).toBeUndefined();
   });
 

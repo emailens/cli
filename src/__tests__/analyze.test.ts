@@ -14,7 +14,7 @@ import { join } from "node:path";
 const ENTRY = join(import.meta.dir, "..", "index.ts");
 
 async function cli(...args: string[]) {
-  // A pipe is not a TTY, so colour ought to be off — but chalk turns it back
+  // A pipe is not a TTY, so colour ought to be off, but chalk turns it back
   // on when it sees `CI`, which every runner sets and no developer machine
   // does. That put ANSI codes between `border-radius` and ` (2:15)` and failed
   // three assertions on CI alone. These tests are about what the CLI says, not
@@ -50,7 +50,7 @@ beforeAll(() => {
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
-describe("analyze — source positions", () => {
+describe("analyze: source positions", () => {
   test("--json reports every place the property breaks", async () => {
     const { stdout } = await cli("analyze", file, "-c", "outlook-windows", "--json");
     const warning = JSON.parse(stdout).warnings.find(

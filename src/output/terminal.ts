@@ -61,7 +61,7 @@ export function printScoreTable(
 ): void {
   if (!options?.quiet) {
     console.log();
-    console.log(pc.bold("  Emailens — Compatibility Report"));
+    console.log(pc.bold("  Emailens: Compatibility Report"));
     console.log();
   }
 
@@ -148,7 +148,7 @@ export function printWarnings(
 
     for (const w of clientWarnings) {
       const prop = pc.dim(w.property);
-      console.log(`    ${severityIcon(w.severity)} ${prop}${formatWhere(w)} — ${w.message}`);
+      console.log(`    ${severityIcon(w.severity)} ${prop}${formatWhere(w)}: ${w.message}`);
       if (w.suggestion) {
         console.log(`      ${pc.dim("→")} ${w.suggestion}`);
       }

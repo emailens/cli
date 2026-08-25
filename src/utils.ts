@@ -102,7 +102,7 @@ export function toFramework(format: InputFormat): Framework | undefined {
  * Do source positions refer to the file the user wrote?
  *
  * Only for plain HTML. JSX, MJML and Maizzle are compiled before analysis, so
- * a position would point into generated output — worse than no position at all,
+ * a position would point into generated output: worse than no position at all,
  * because it looks authoritative.
  */
 export function positionsApply(format: string): boolean {

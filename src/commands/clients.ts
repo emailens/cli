@@ -28,7 +28,7 @@ export default defineCommand({
     }
 
     console.log();
-    console.log(pc.bold("  Emailens — Supported Email Clients"));
+    console.log(pc.bold("  Emailens: Supported Email Clients"));
     console.log();
 
     const table = new Table({

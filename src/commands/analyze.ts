@@ -65,7 +65,7 @@ export default defineCommand({
       spinner?.start("Analyzing compatibility...");
       const framework = toFramework(format);
       // Positions only mean something when the file analyzed is the file the
-      // user wrote — see positionsApply().
+      // user wrote, see positionsApply().
       const warnings = analyzeEmail(html, framework, { positions: positionsApply(format) });
       const allScores = generateCompatibilityScore(warnings);
 
