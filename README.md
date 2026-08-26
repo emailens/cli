@@ -109,7 +109,7 @@ cat email.html | emailens fix - --format jsx       # Pipe from stdin
 
 ### `emailens lint <file|glob>`
 
-CI/CD-friendly linting with structured exit codes. Flattens all audit checks (compatibility, content hygiene, links, accessibility, images, inbox preview, size, template variables, content overflow, visual bugs) into a unified issue list.
+CI/CD-friendly linting with structured exit codes. Flattens all audit checks (compatibility, content hygiene, links, accessibility, images, inbox preview, size, template variables, content overflow, visual bugs, dark-mode and mobile contrast, design consistency) into a unified issue list.
 
 ```bash
 emailens lint email.html
@@ -125,7 +125,7 @@ emailens lint email.html --max-warnings 5
 | `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
 | `--json` | | Output as JSON |
 | `--fail-on-warning` | | Exit 2 if warnings found |
-| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual` |
+| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design` |
 | `--max-warnings` | | Fail if more than n warnings |
 
 **Exit codes:**

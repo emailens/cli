@@ -25,6 +25,7 @@ let warns: string;
 let errors: string;
 let located: string;
 let locatedSource: string;
+let contrastDrift: string;
 
 async function cli(...args: string[]) {
   // `bun ENTRY`, not `bun run ENTRY`: `bun run` swallows flags it recognises as
@@ -102,6 +103,23 @@ beforeAll(() => {
     `${HEAD}
     <p style="color:#1a1a1a;background:#ffffff;font-size:14px">Your order 1234 has shipped.</p>
     <a href="mailto:" style="color:#1a1a1a">Email us</a>
+    ${FOOT}`,
+  );
+
+  // Trips the two checks a light desktop preview cannot show: the dark block
+  // repaints the card without re-colouring the text on it, and the two
+  // off-whites are the same colour to a reader.
+  contrastDrift = join(dir, "contrast-drift.html");
+  writeFileSync(
+    contrastDrift,
+    `<html lang="en"><head><meta charset="utf-8"><title>Receipt</title><style>
+    @media (prefers-color-scheme: dark){ .card{background-color:#141519 !important} }
+    </style></head><body style="background:#f0ece4">
+    <table class="card" role="presentation"><tr><td style="color:#1a1714;font-size:14px">
+      <div>Archival Linen Notebook</div>
+    </td></tr></table>
+    <div style="color:#eae6de;font-size:14px">Order total</div>
+    <div style="color:#f4f2ed;font-size:14px">Shipping</div>
     ${FOOT}`,
   );
 });
@@ -462,5 +480,43 @@ describe("lint: .emailensrc", () => {
     expect(() => JSON.parse(stdout)).not.toThrow();
     expect(stderr).toBe("");
     rmSync(at, { recursive: true, force: true });
+  });
+});
+
+describe("lint: the checks a light desktop preview cannot show", () => {
+  test("reports dark-mode contrast as an error, with a position", async () => {
+    const { stdout } = await cli("lint", contrastDrift, "--json");
+    const report = JSON.parse(stdout);
+    const issues = report.files[0].issues as Array<{
+      category: string; rule: string; severity: string; loc?: { line: number };
+    }>;
+
+    const dark = issues.find((i) => i.rule === "low-contrast-dark");
+    expect(dark).toBeDefined();
+    expect(dark!.category).toBe("darkContrast");
+    expect(dark!.severity).toBe("error");
+    // Invisible text is a build break, not a note.
+    expect(report.totalErrors).toBeGreaterThan(0);
+    expect(dark!.loc?.line).toBeGreaterThan(0);
+  });
+
+  test("reports colour drift", async () => {
+    const { stdout } = await cli("lint", contrastDrift, "--json");
+    const issues = JSON.parse(stdout).files[0].issues as Array<{ category: string; rule: string }>;
+
+    expect(issues.some((i) => i.category === "design" && i.rule === "colour-drift")).toBe(true);
+  });
+
+  test("--skip drops them", async () => {
+    const { stdout } = await cli(
+      "lint", contrastDrift, "--json", "--skip", "darkContrast,mobileContrast,design",
+    );
+    const issues = JSON.parse(stdout).files[0].issues as Array<{ category: string }>;
+
+    for (const category of ["darkContrast", "mobileContrast", "design"]) {
+      expect(issues.some((i) => i.category === category)).toBe(false);
+    }
+    // Still a real lint run, not an empty one.
+    expect(issues.length).toBeGreaterThan(0);
   });
 });

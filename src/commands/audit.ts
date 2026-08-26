@@ -11,12 +11,12 @@ import { readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 
-const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual"]);
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design"]);
 
 export default defineCommand({
   meta: {
     name: "audit",
-    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual",
+    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual + contrast + design",
   },
   args: {
     input: {
@@ -40,7 +40,7 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual,darkContrast,mobileContrast,design",
     },
   },
   async run({ args }) {
@@ -58,7 +58,7 @@ export default defineCommand({
       const html = await compile(source, format);
 
       // Parse --skip flag
-      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual"> = [];
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design"> = [];
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -147,6 +147,25 @@ function printQualitySummary(
     const { issues } = report.visual;
     const color = issues.length === 0 ? pc.green : pc.yellow;
     table.push(["Visual Bugs", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
+  }
+
+  // Contrast findings are errors, not tips: text at 1:1 is invisible, not untidy.
+  if (!skip.includes("darkContrast")) {
+    const n = report.darkContrast.length;
+    const color = n === 0 ? pc.green : pc.red;
+    table.push(["Dark Mode Contrast", color(`${n} issue${n === 1 ? "" : "s"}`)]);
+  }
+
+  if (!skip.includes("mobileContrast")) {
+    const n = report.mobileContrast.length;
+    const color = n === 0 ? pc.green : pc.red;
+    table.push(["Mobile Contrast", color(`${n} issue${n === 1 ? "" : "s"}`)]);
+  }
+
+  if (!skip.includes("design")) {
+    const { issues } = report.design;
+    const color = issues.length === 0 ? pc.green : pc.yellow;
+    table.push(["Design Consistency", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
   }
 
   console.log(table.toString());

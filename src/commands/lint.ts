@@ -37,6 +37,7 @@ interface LintFileResult {
 const VALID_SKIPS = new Set([
   "spam", "links", "accessibility", "images",
   "compatibility", "inboxPreview", "size", "templateVariables", "overflow", "visual",
+  "darkContrast", "mobileContrast", "design",
 ]);
 
 export default defineCommand({
@@ -224,7 +225,7 @@ export default defineCommand({
   },
 });
 
-type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual";
+type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design";
 
 
 /**
@@ -438,6 +439,45 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         rule: issue.rule,
         message: issue.message,
         ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  // Contrast in the two renders a desktop light preview never shows. These are
+  // flat arrays rather than a report with `.issues`, and their messages arrive
+  // prefixed ("Dark mode: …"), which the category column already says.
+  if (!skip.includes("darkContrast")) {
+    for (const issue of report.darkContrast) {
+      issues.push({
+        severity: issue.severity,
+        category: "darkContrast",
+        rule: issue.rule,
+        message: issue.message.replace(/^Dark mode: /, ""),
+        ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  if (!skip.includes("mobileContrast")) {
+    for (const issue of report.mobileContrast) {
+      issues.push({
+        severity: issue.severity,
+        category: "mobileContrast",
+        rule: issue.rule,
+        message: issue.message.replace(/^At mobile width: /, ""),
+        ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  if (!skip.includes("design")) {
+    for (const issue of report.design.issues) {
+      issues.push({
+        severity: issue.severity,
+        category: "design",
+        rule: issue.rule,
+        message: issue.message,
+        detail: issue.detail,
       });
     }
   }
