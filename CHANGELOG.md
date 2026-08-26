@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0 - 2026-08-26
+
+### Added
+
+- **`audit` and `lint` report the three checks a light desktop preview cannot show.** Dark-mode contrast, mobile contrast and design consistency, from `@emailens/engine` 0.11.0. Both commands build their output check by check, so the engine had been computing these for a release without either command saying a word about them.
+
+  Dark mode is two separate failures. Clients that force an inversion disagree with each other, so Gmail Android's partial and Gmail iOS's full inversion are both graded; separately, the email's own `@media (prefers-color-scheme: dark)` block is applied the way Apple Mail, Superhuman and Thunderbird apply it, which is how a dark block that repaints a card without re-colouring the text on it gets found. Mobile contrast grades what a `max-width` block restyles. Design consistency reports colours that differ by value but not to a reader, and runaway counts of type sizes, typefaces and corner radii.
+
+  All three take the engine's own names in `--skip` and in `.emailensrc`: `darkContrast`, `mobileContrast`, `design`. Contrast findings carry positions, so a CI annotation points at the line.
+
+### Changed
+
+- **`lint` can now exit 1 on an email that passed before.** Contrast findings are errors, because text at 1:1 is invisible rather than untidy, and `lint` exits 1 on any error. That is the point of shipping them here: a dark-mode failure is exactly the kind of thing nobody sees before it goes out, and CI is the only place it gets caught.
+
+  If that lands on a pipeline mid-sprint, `--skip darkContrast` or a `rules` entry in `.emailensrc` demotes it while the email gets fixed. Neither is the right end state, and both beat a red build nobody asked for today.
+
+- **Every diagnostic message is reworded.** `@emailens/engine` 0.11.0 replaced the em dashes in its messages with grammatical punctuation, and both commands print those messages verbatim. Rule ids, severities and counts are unchanged, but anything matching on message text needs regenerating.
+
+- **Contrast findings move.** The same release grades contrast against a resolved CSS cascade rather than inline styles, so the `accessibility` check loses false positives where a background was previously unreadable and gains real findings where a stylesheet rule was previously unread.
+
 ## 0.4.3 - 2026-08-23
 
 ### Added
