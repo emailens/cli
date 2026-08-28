@@ -11,12 +11,12 @@ import { readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 
-const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design"]);
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml"]);
 
 export default defineCommand({
   meta: {
     name: "audit",
-    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual + contrast + design",
+    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual + contrast + design + Outlook VML",
   },
   args: {
     input: {
@@ -40,7 +40,7 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual,darkContrast,mobileContrast,design",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual,darkContrast,mobileContrast,design,vml",
     },
   },
   async run({ args }) {
@@ -58,7 +58,7 @@ export default defineCommand({
       const html = await compile(source, format);
 
       // Parse --skip flag
-      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design"> = [];
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml"> = [];
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -160,6 +160,14 @@ function printQualitySummary(
     const n = report.mobileContrast.length;
     const color = n === 0 ? pc.green : pc.red;
     table.push(["Mobile Contrast", color(`${n} issue${n === 1 ? "" : "s"}`)]);
+  }
+
+  // VML faults are red, not yellow: a nested shape does not degrade the render,
+  // it deletes a region of it and everything after.
+  if (!skip.includes("vml")) {
+    const { issues } = report.vml;
+    const color = issues.length === 0 ? pc.green : pc.red;
+    table.push(["Outlook VML", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
   }
 
   if (!skip.includes("design")) {

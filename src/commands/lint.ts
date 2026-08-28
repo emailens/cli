@@ -37,7 +37,7 @@ interface LintFileResult {
 const VALID_SKIPS = new Set([
   "spam", "links", "accessibility", "images",
   "compatibility", "inboxPreview", "size", "templateVariables", "overflow", "visual",
-  "darkContrast", "mobileContrast", "design",
+  "darkContrast", "mobileContrast", "design", "vml",
 ]);
 
 export default defineCommand({
@@ -66,7 +66,7 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,vml",
     },
     maxWarnings: {
       type: "string",
@@ -225,7 +225,7 @@ export default defineCommand({
   },
 });
 
-type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design";
+type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml";
 
 
 /**
@@ -465,6 +465,19 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         category: "mobileContrast",
         rule: issue.rule,
         message: issue.message.replace(/^At mobile width: /, ""),
+        ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  if (!skip.includes("vml")) {
+    for (const issue of report.vml.issues) {
+      issues.push({
+        severity: issue.severity,
+        category: "vml",
+        rule: issue.rule,
+        message: issue.message,
+        detail: issue.detail,
         ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
