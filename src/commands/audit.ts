@@ -11,7 +11,7 @@ import { readInput, resolveFormat, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 
-const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml"]);
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml", "styleSurvival"]);
 
 export default defineCommand({
   meta: {
@@ -58,7 +58,7 @@ export default defineCommand({
       const html = await compile(source, format);
 
       // Parse --skip flag
-      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml"> = [];
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival"> = [];
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -174,6 +174,14 @@ function printQualitySummary(
     const { issues } = report.design;
     const color = issues.length === 0 ? pc.green : pc.yellow;
     table.push(["Design Consistency", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
+  }
+
+  // Red like VML, and for the same reason: these are not degraded renders but
+  // stylesheets a client throws away, silently and often in full.
+  if (!skip.includes("styleSurvival")) {
+    const { issues } = report.styleSurvival;
+    const color = issues.length === 0 ? pc.green : pc.red;
+    table.push(["Style Survival", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
   }
 
   console.log(table.toString());

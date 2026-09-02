@@ -37,7 +37,7 @@ interface LintFileResult {
 const VALID_SKIPS = new Set([
   "spam", "links", "accessibility", "images",
   "compatibility", "inboxPreview", "size", "templateVariables", "overflow", "visual",
-  "darkContrast", "mobileContrast", "design", "vml",
+  "darkContrast", "mobileContrast", "design", "vml", "styleSurvival",
 ]);
 
 export default defineCommand({
@@ -225,7 +225,7 @@ export default defineCommand({
   },
 });
 
-type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml";
+type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival";
 
 
 /**
@@ -478,6 +478,22 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         rule: issue.rule,
         message: issue.message,
         detail: issue.detail,
+        ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  if (!skip.includes("styleSurvival")) {
+    for (const issue of report.styleSurvival.issues) {
+      // The clients are the finding here: "Gmail drops this block" is the
+      // whole point, and the message alone does not carry it in lint output.
+      const clients = issue.clients.length ? ` (${issue.clients.join(", ")})` : "";
+      issues.push({
+        severity: issue.severity,
+        category: "styleSurvival",
+        rule: issue.rule,
+        message: `${issue.message}${clients}`,
+        detail: issue.frameworkNote ?? issue.detail,
         ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }

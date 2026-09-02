@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.6.0 - 2026-09-03
+
+### Added
+
+- **Style Survival in `audit` and `lint`.** Engine 0.12.1 added rules for CSS a
+  client parses correctly and then discards: a stylesheet past Gmail's 16 KB
+  ceiling, every rule after a `}}`, a `rgb(0 0 0)` that costs the whole block.
+  `audit` shows the count in red, like VML and for the same reason: these are
+  not degraded renders, they are stylesheets that are gone. `lint` emits each
+  issue under a `styleSurvival` category with the affected clients appended,
+  because "Gmail drops this block" is the finding and the message alone does
+  not carry it. Both accept `--skip styleSurvival`.
+
+  The framework note comes through as the issue detail where the engine has
+  one: for an MJML or Maizzle project the CSS came from `mj-style` or a
+  Tailwind layer, not from the `<style>` block the rule found.
+
+### Changed
+
+- **Requires engine >=0.12.2.** 0.12.1 narrowed `EmailClient.id`, which broke
+  four sites here that key a Set or Map by client id; 0.12.2 reverts that and
+  is the first release this can run on. `--failOnWarning` also works again on
+  ordinary email: 0.12.0 began grading the `width` and `height` attributes at
+  warning severity, which fires on any email that sizes an image, and 0.12.2
+  moves them to info.
+
 ## 0.5.0 - 2026-08-26
 
 ### Added
