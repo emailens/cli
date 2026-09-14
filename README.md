@@ -18,7 +18,7 @@ CLI tool for email compatibility analysis; preview how your emails render across
 
 Point it at **HTML, MJML, Maizzle or React Email**. The format is detected from the file extension, the template is compiled with your project's own compiler, and what gets linted is the HTML your readers actually receive.
 
-Across the 255 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 249 before your users do.
+Across the 298 CSS and HTML features we track, only 6 are fully supported in every major client ([see the data](https://emailens.dev/email-css/report)). This tool catches the other 292 before your users do.
 
 ![emailens lint output showing errors and warnings across email clients](./docs/lint-demo.png)
 
