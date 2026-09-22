@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import pc from "picocolors";
-import { positionsApply, readInput, resolveFormat, toFramework } from "../utils.js";
+import { parseTargetingPolicy, positionsApply, readInput, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import {
   auditEmail,
@@ -37,7 +37,7 @@ interface LintFileResult {
 const VALID_SKIPS = new Set([
   "spam", "links", "accessibility", "images",
   "compatibility", "inboxPreview", "size", "templateVariables", "overflow", "visual",
-  "darkContrast", "mobileContrast", "design", "vml", "styleSurvival",
+  "darkContrast", "mobileContrast", "design", "vml", "styleSurvival", "targeting",
 ]);
 
 export default defineCommand({
@@ -66,8 +66,9 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,vml",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,vml,styleSurvival,targeting",
     },
+    targetingPolicy: TARGETING_POLICY_ARG,
     maxWarnings: {
       type: "string",
       description: "Fail if more than n warnings",
@@ -143,10 +144,12 @@ export default defineCommand({
         // the source IS the analyzed HTML.
         const positions = positionsApply(format);
 
+        const targetingPolicy = parseTargetingPolicy(args.targetingPolicy);
         const report = auditEmail(html, {
           framework,
           skip: skip as AuditSkipType[],
           positions,
+          targetingPolicy,
         });
 
         const issues = applySeverities(flattenToLintIssues(report, skip), project?.rules);
@@ -225,7 +228,7 @@ export default defineCommand({
   },
 });
 
-type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival";
+type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival" | "targeting";
 
 
 /**
@@ -495,6 +498,21 @@ function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
         message: `${issue.message}${clients}`,
         detail: issue.frameworkNote ?? issue.detail,
         ...(issue.loc ? { loc: issue.loc } : {}),
+      });
+    }
+  }
+
+  if (!skip.includes("targeting")) {
+    for (const issue of report.targeting.warnings) {
+      issues.push({
+        severity: issue.severity,
+        category: "targeting",
+        rule: issue.property,
+        message: issue.message,
+        detail: issue.suggestion,
+        ...(issue.loc ? { loc: issue.loc } : {}),
+        ...(issue.locs?.length ? { locs: issue.locs } : {}),
+        ...(issue.locsTruncated ? { locsTruncated: true } : {}),
       });
     }
   }

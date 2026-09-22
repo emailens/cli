@@ -160,6 +160,15 @@ emailens lint email.html --fail-on-warning
 emailens lint email.html --max-warnings 5
 ```
 
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
+| `--json` | | Output as JSON |
+| `--fail-on-warning` | | Exit 2 if warnings found |
+| `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |
+| `--targeting-policy` | | `progressive` (default), `strict`, or `lenient` |
+| `--max-warnings` | | Fail if more than n warnings |
+
 Exit codes:
 
 - `0`: clean

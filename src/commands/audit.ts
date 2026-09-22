@@ -7,16 +7,16 @@ import {
   CompileError,
   type AuditReport,
 } from "@emailens/engine";
-import { readInput, resolveFormat, toFramework } from "../utils.js";
+import { parseTargetingPolicy, readInput, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 
-const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml", "styleSurvival"]);
+const VALID_SKIPS = new Set(["spam", "links", "accessibility", "images", "compatibility", "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml", "styleSurvival", "targeting"]);
 
 export default defineCommand({
   meta: {
     name: "audit",
-    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual + contrast + design + Outlook VML",
+    description: "Full email audit: compatibility + spam + links + accessibility + images + overflow + visual + contrast + design + Outlook VML + client targeting",
   },
   args: {
     input: {
@@ -40,8 +40,9 @@ export default defineCommand({
     },
     skip: {
       type: "string",
-      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual,darkContrast,mobileContrast,design,vml",
+      description: "Comma-separated checks to skip: spam,links,accessibility,images,compatibility,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting",
     },
+    targetingPolicy: TARGETING_POLICY_ARG,
   },
   async run({ args }) {
     const spinner = (args.quiet || args.json) ? null : ora();
@@ -58,7 +59,7 @@ export default defineCommand({
       const html = await compile(source, format);
 
       // Parse --skip flag
-      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival"> = [];
+      const skip: Array<"spam" | "links" | "accessibility" | "images" | "compatibility" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival" | "targeting"> = [];
       if (args.skip) {
         for (const s of args.skip.split(",").map((s) => s.trim()).filter(Boolean)) {
           if (!VALID_SKIPS.has(s)) {
@@ -71,7 +72,8 @@ export default defineCommand({
       // Run audit
       spinner?.start("Running full audit...");
       const framework = toFramework(format);
-      const report = auditEmail(html, { framework, skip });
+      const targetingPolicy = parseTargetingPolicy(args.targetingPolicy);
+      const report = auditEmail(html, { framework, skip, targetingPolicy });
       spinner?.succeed("Audit complete");
 
       // Output
@@ -182,6 +184,15 @@ function printQualitySummary(
     const { issues } = report.styleSurvival;
     const color = issues.length === 0 ? pc.green : pc.red;
     table.push(["Style Survival", color(`${issues.length} issue${issues.length === 1 ? "" : "s"}`)]);
+  }
+
+  if (!skip.includes("targeting")) {
+    const { detectedHacks, warnings } = report.targeting;
+    const color = warnings.length === 0 ? pc.green : pc.yellow;
+    table.push([
+      "Client Targeting",
+      `${detectedHacks.length} detected, ${color(`${warnings.length} warning${warnings.length === 1 ? "" : "s"}`)}`,
+    ]);
   }
 
   console.log(table.toString());

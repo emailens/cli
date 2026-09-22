@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { EMAIL_CLIENTS, type Framework, type InputFormat } from "@emailens/engine";
+import { EMAIL_CLIENTS, type Framework, type InputFormat, type TargetingPolicy } from "@emailens/engine";
 import { detectFormat } from "@emailens/engine/compile";
 
 const VALID_FORMATS = new Set(["html", "jsx", "mjml", "maizzle"]);
@@ -107,4 +107,16 @@ export function toFramework(format: InputFormat): Framework | undefined {
  */
 export function positionsApply(format: string): boolean {
   return format === "html";
+}
+
+/** citty arg shared by analyze / audit / lint / preview / export / fix. */
+export const TARGETING_POLICY_ARG = {
+  type: "string" as const,
+  description: "Client-targeting policy: progressive (default), strict, or lenient",
+};
+
+export function parseTargetingPolicy(raw?: string): TargetingPolicy | undefined {
+  if (raw == null || raw === "") return undefined;
+  if (raw === "progressive" || raw === "strict" || raw === "lenient") return raw;
+  throw new Error(`Unknown targeting policy "${raw}". Valid: progressive, strict, lenient`);
 }

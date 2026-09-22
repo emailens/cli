@@ -10,7 +10,7 @@ import {
   CompileError,
   type AiProvider,
 } from "@emailens/engine";
-import { readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
+import { parseTargetingPolicy, readInput, resolveClients, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 
 export default defineCommand({
@@ -56,6 +56,7 @@ export default defineCommand({
       type: "string",
       description: "Maximum input tokens for the prompt (default: 16000)",
     },
+    targetingPolicy: TARGETING_POLICY_ARG,
   },
   async run({ args }) {
     const spinner = (args.quiet || args.json) ? null : ora();
@@ -72,7 +73,9 @@ export default defineCommand({
 
       // Analyze
       spinner?.start("Analyzing compatibility...");
-      const warnings = analyzeEmail(html, framework);
+      const warnings = analyzeEmail(html, framework, {
+        targetingPolicy: parseTargetingPolicy(args.targetingPolicy),
+      });
       const scores = generateCompatibilityScore(warnings);
       spinner?.succeed(`Found ${warnings.length} warnings`);
 

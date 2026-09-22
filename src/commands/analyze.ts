@@ -6,7 +6,7 @@ import {
   warningsForClient,
   CompileError,
 } from "@emailens/engine";
-import { positionsApply, readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
+import { parseTargetingPolicy, positionsApply, readInput, resolveClients, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 import { printJson } from "../output/json.js";
@@ -41,6 +41,7 @@ export default defineCommand({
       alias: "q",
       description: "Suppress spinners and decorations",
     },
+    targetingPolicy: TARGETING_POLICY_ARG,
   },
   async run({ args }) {
     // --json implies quiet spinners
@@ -66,7 +67,10 @@ export default defineCommand({
       const framework = toFramework(format);
       // Positions only mean something when the file analyzed is the file the
       // user wrote, see positionsApply().
-      const warnings = analyzeEmail(html, framework, { positions: positionsApply(format) });
+      const warnings = analyzeEmail(html, framework, {
+        positions: positionsApply(format),
+        targetingPolicy: parseTargetingPolicy(args.targetingPolicy),
+      });
       const allScores = generateCompatibilityScore(warnings);
 
       // Filter scores to requested clients

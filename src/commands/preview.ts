@@ -9,7 +9,7 @@ import {
   CompileError,
   type CSSWarning,
 } from "@emailens/engine";
-import { readInput, resolveClients, resolveFormat, toFramework } from "../utils.js";
+import { parseTargetingPolicy, readInput, resolveClients, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
 import { compile } from "@emailens/engine/compile";
 import { printScoreTable, printWarnings } from "../output/terminal.js";
 import { printJson } from "../output/json.js";
@@ -58,6 +58,7 @@ export default defineCommand({
       alias: "q",
       description: "Suppress spinners and decorations",
     },
+    targetingPolicy: TARGETING_POLICY_ARG,
   },
   async run({ args }) {
     const spinner = (args.quiet || args.json) ? null : ora();
@@ -87,7 +88,9 @@ export default defineCommand({
       // Analyze
       spinner?.start("Analyzing compatibility...");
       const framework = toFramework(format);
-      const warnings = analyzeEmail(html, framework);
+      const warnings = analyzeEmail(html, framework, {
+        targetingPolicy: parseTargetingPolicy(args.targetingPolicy),
+      });
       const allScores = generateCompatibilityScore(warnings);
 
       const scores: typeof allScores = {};

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0 - 2026-09-22
+
+### Added
+
+- **Client targeting in `audit` and `lint`.** Engine 0.13.0 detects HowToTarget
+  hacks (Gmail `u + .body`, MSO conditionals, wrap-body clients) and treats
+  them as a targeting report, not as CSS-hack scores. `audit` prints detected
+  count and policy warnings. `lint` emits each flagged hack under `targeting`.
+  Both accept `--skip targeting` and `--targeting-policy progressive|strict|lenient`
+  (default progressive: suppress false-positive compatibility warnings inside
+  targeted scopes; only flag deprecated or dangerous hacks).
+
+### Changed
+
+- **Requires engine >=0.13.0.** Caret `^0.12.x` does not install 0.13. Analyze,
+  preview, export and fix pass the same targeting policy into scoring.
+
 ## 0.6.0 - 2026-09-03
 
 ### Added

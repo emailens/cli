@@ -520,3 +520,30 @@ describe("lint: the checks a light desktop preview cannot show", () => {
     expect(issues.length).toBeGreaterThan(0);
   });
 });
+
+describe("lint: client targeting", () => {
+  let deprecatedHack: string;
+
+  beforeAll(() => {
+    deprecatedHack = join(dir, "deprecated-hack.html");
+    writeFileSync(
+      deprecatedHack,
+      `${HEAD}
+      <style>_:-webkit-full-screen, :root .card { background: blue; }</style>
+      <div class="card">Card</div>
+      ${FOOT}`,
+    );
+  });
+
+  test("flags a deprecated targeting hack", async () => {
+    const { stdout } = await cli("lint", deprecatedHack, "--json");
+    const issues = JSON.parse(stdout).files[0].issues as Array<{ category: string; rule: string }>;
+    expect(issues.some((i) => i.category === "targeting" && i.rule === "css-hack")).toBe(true);
+  });
+
+  test("--skip targeting drops them", async () => {
+    const { stdout } = await cli("lint", deprecatedHack, "--json", "--skip", "targeting");
+    const issues = JSON.parse(stdout).files[0].issues as Array<{ category: string }>;
+    expect(issues.some((i) => i.category === "targeting")).toBe(false);
+  });
+});
