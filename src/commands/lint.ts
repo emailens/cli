@@ -76,6 +76,7 @@ export default defineCommand({
   },
   async run({ args }) {
     try {
+      if (args.format) resolveFormat(args.format);
       // `.emailensrc`, the same file the editor extension reads. Without this
       // a rule demoted in the editor still fails the build, which is the worst
       // of both: the panel says it does not matter and CI says it does.
@@ -133,8 +134,8 @@ export default defineCommand({
       let totalWarnings = 0;
 
       for (const file of files) {
-        const format = resolveFormat(args.format, file);
         const source = await readInput(file);
+        const format = resolveFormat(args.format, file, source);
         const html = await compile(source, format);
         const framework = toFramework(format);
 

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import * as engine from "@emailens/engine";
 import { EMAIL_CLIENTS } from "@emailens/engine";
 import { resolveClients, resolveFormat, toFramework } from "../utils.js";
 
@@ -37,14 +38,23 @@ describe("resolveFormat", () => {
   test("the extension is used when no flag is given", () => {
     expect(resolveFormat(undefined, "welcome.mjml")).toBe("mjml");
     expect(resolveFormat(undefined, "welcome.jsx")).toBe("jsx");
+    expect(resolveFormat(undefined, "welcome.vue")).toBe("maizzle");
   });
 
-  test("stdin with no flag falls back to html", () => {
+  test("stdin with no flag falls back to html, unless the paste is a Vue file", () => {
     expect(resolveFormat(undefined, "-")).toBe("html");
+    expect(resolveFormat(undefined, "-", "<template><p>Hi</p></template>")).toBe("maizzle");
+    expect(resolveFormat(undefined, "-", "<p>Hi</p>")).toBe("html");
   });
 
   test("no flag and no path falls back to html", () => {
     expect(resolveFormat()).toBe("html");
+  });
+});
+
+describe("engine 0.14", () => {
+  test("warningsForClient is gone", () => {
+    expect("warningsForClient" in engine).toBe(false);
   });
 });
 

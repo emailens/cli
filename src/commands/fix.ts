@@ -62,12 +62,11 @@ export default defineCommand({
     const spinner = (args.quiet || args.json) ? null : ora();
 
     try {
-      const format = resolveFormat(args.format, args.input);
-      const framework = toFramework(format);
-
-      // Read and compile input
+      if (args.format) resolveFormat(args.format);
       spinner?.start("Reading input...");
       const source = await readInput(args.input);
+      const format = resolveFormat(args.format, args.input, source);
+      const framework = toFramework(format);
       const html = await compile(source, format);
       spinner?.succeed("Input read");
 

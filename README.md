@@ -61,6 +61,8 @@ Or use it without installing:
 npx @emailens/cli lint email.html
 ```
 
+Maizzle HTML needs `@maizzle/framework@5` installed beside the CLI. A `.vue` file needs `@maizzle/framework@6`. One install is one major.
+
 ## Quick start
 
 ### Check a single file
@@ -162,7 +164,7 @@ emailens lint email.html --max-warnings 5
 
 | Flag | Alias | Description |
 |------|-------|-------------|
-| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
+| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle`. `.vue` is `maizzle`. A pasted Vue file with no flag is detected. |
 | `--json` | | Output as JSON |
 | `--fail-on-warning` | | Exit 2 if warnings found |
 | `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |

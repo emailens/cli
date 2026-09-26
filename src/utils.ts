@@ -72,7 +72,11 @@ export function resolveClients(ids?: string): string[] {
  * Validates the --format flag and errors on unknown values.
  * Auto-detects from file extension when no flag is given.
  */
-export function resolveFormat(formatFlag?: string, filePath?: string): InputFormat {
+function isVueSfc(source: string): boolean {
+  return /<template[\s>]/i.test(source) && /<\/template>/i.test(source);
+}
+
+export function resolveFormat(formatFlag?: string, filePath?: string, source?: string): InputFormat {
   if (formatFlag) {
     if (!VALID_FORMATS.has(formatFlag)) {
       throw new Error(
@@ -82,10 +86,13 @@ export function resolveFormat(formatFlag?: string, filePath?: string): InputForm
     return formatFlag as InputFormat;
   }
 
-  // Auto-detect from file extension
+  // Auto-detect from file extension. `.vue` is maizzle.
   if (filePath && filePath !== "-") {
     return detectFormat(filePath);
   }
+
+  // Stdin has no extension. A Vue SFC graded as HTML looks clean.
+  if (source && isVueSfc(source)) return "maizzle";
 
   return "html";
 }

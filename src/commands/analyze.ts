@@ -3,7 +3,6 @@ import ora from "ora";
 import {
   analyzeEmail,
   generateCompatibilityScore,
-  warningsForClient,
   CompileError,
 } from "@emailens/engine";
 import { parseTargetingPolicy, positionsApply, readInput, resolveClients, resolveFormat, TARGETING_POLICY_ARG, toFramework } from "../utils.js";
@@ -48,13 +47,12 @@ export default defineCommand({
     const spinner = (args.quiet || args.json) ? null : ora();
 
     try {
-      // Resolve format early so we fail fast on invalid --format
-      const format = resolveFormat(args.format, args.input);
-
-      // Read input
+      if (args.format) resolveFormat(args.format);
       spinner?.start("Reading input...");
       const source = await readInput(args.input);
       spinner?.succeed("Input read");
+
+      const format = resolveFormat(args.format, args.input, source);
 
       // Compile (passthrough for html, auto-detects from extension)
       const html = await compile(source, format);
@@ -83,7 +81,7 @@ export default defineCommand({
       }
 
       // Filter warnings to requested clients
-      const filteredWarnings = clientIds.flatMap(id => warningsForClient(warnings, id));
+      const filteredWarnings = clientIds.flatMap(id => warnings.filter(w => w.client === id));
 
       spinner?.succeed("Analysis complete");
 

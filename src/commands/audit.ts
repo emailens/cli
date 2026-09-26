@@ -48,12 +48,12 @@ export default defineCommand({
     const spinner = (args.quiet || args.json) ? null : ora();
 
     try {
-      const format = resolveFormat(args.format, args.input);
-
-      // Read input
+      if (args.format) resolveFormat(args.format);
       spinner?.start("Reading input...");
       const source = await readInput(args.input);
       spinner?.succeed("Input read");
+
+      const format = resolveFormat(args.format, args.input, source);
 
       // Compile
       const html = await compile(source, format);

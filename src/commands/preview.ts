@@ -5,7 +5,6 @@ import {
   analyzeEmail,
   generateCompatibilityScore,
   simulateDarkMode,
-  warningsForClient,
   CompileError,
   type CSSWarning,
 } from "@emailens/engine";
@@ -64,13 +63,12 @@ export default defineCommand({
     const spinner = (args.quiet || args.json) ? null : ora();
 
     try {
-      // Resolve format early so we fail fast on invalid --format
-      const format = resolveFormat(args.format, args.input);
-
-      // Read input
+      if (args.format) resolveFormat(args.format);
       spinner?.start("Reading input...");
       const source = await readInput(args.input);
       spinner?.succeed("Input read");
+
+      const format = resolveFormat(args.format, args.input, source);
 
       // Compile (passthrough for html, auto-detects from extension)
       const html = await compile(source, format);
@@ -99,7 +97,7 @@ export default defineCommand({
           scores[id] = data;
         }
       }
-      const filteredWarnings = clientIds.flatMap(id => warningsForClient(warnings, id));
+      const filteredWarnings = clientIds.flatMap(id => warnings.filter(w => w.client === id));
       spinner?.succeed("Analysis complete");
 
       // Dark mode
