@@ -1,5 +1,14 @@
 import type { CSSWarning, SourceLocation, TransformResult } from "@emailens/engine";
 
+/** The headline is the worst client. A mean of 21 clients hides the one that fails. */
+export function worstClientScore(
+  scores: Record<string, { score: number }>,
+): number {
+  const values = Object.values(scores);
+  if (values.length === 0) return 0;
+  return Math.min(...values.map((s) => s.score));
+}
+
 interface JsonOutput {
   overallScore: number;
   scores: Record<string, { score: number; errors: number; warnings: number; info: number }>;
@@ -41,10 +50,7 @@ export function formatJsonOutput(opts: {
   transforms?: TransformResult[];
   darkMode?: Record<string, { html: string; warnings: CSSWarning[] }>;
 }): JsonOutput {
-  const scoreValues = Object.values(opts.scores);
-  const overallScore = scoreValues.length > 0
-    ? Math.round(scoreValues.reduce((a, b) => a + b.score, 0) / scoreValues.length)
-    : 0;
+  const overallScore = worstClientScore(opts.scores);
 
   const output: JsonOutput = {
     overallScore,

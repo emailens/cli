@@ -4,6 +4,7 @@ import {
   EMAIL_CLIENTS,
   type CSSWarning,
 } from "@emailens/engine";
+import { worstClientScore } from "./json";
 
 /**
  * Color-code a score value: green >=90, yellow >=70, red <70.
@@ -95,10 +96,7 @@ export function printScoreTable(
   console.log(table.toString());
 
   // Overall score
-  const scoreValues = Object.values(scores);
-  const overall = scoreValues.length > 0
-    ? Math.round(scoreValues.reduce((a, b) => a + b.score, 0) / scoreValues.length)
-    : 0;
+  const overall = worstClientScore(scores);
 
   console.log();
   console.log(`  Overall: ${colorScore(overall)}/100`);

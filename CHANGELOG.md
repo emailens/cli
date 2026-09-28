@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1 - 2026-09-28
+
+### Changed
+
+- **The headline is the worst client.** The terminal, the HTML report, and
+  `--json` `overallScore` were the mean of 21 clients, which hid a single
+  failure. They are now the lowest score.
+- **Requires engine >=0.14.1.** A loss a fallback still covers no longer moves
+  the number.
+
 ## 0.7.0 - 2026-09-22
 
 ### Added

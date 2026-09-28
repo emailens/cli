@@ -1,4 +1,5 @@
 import { EMAIL_CLIENTS, type CSSWarning, type TransformResult } from "@emailens/engine";
+import { worstClientScore } from "./json";
 
 /**
  * Generate a self-contained HTML report file.
@@ -12,10 +13,7 @@ export function generateHtmlReport(opts: {
 }): string {
   const clientMap = new Map(EMAIL_CLIENTS.map((c) => [c.id, c]));
 
-  const scoreValues = Object.values(opts.scores);
-  const overallScore = scoreValues.length > 0
-    ? Math.round(scoreValues.reduce((a, b) => a + b.score, 0) / scoreValues.length)
-    : 0;
+  const overallScore = worstClientScore(opts.scores);
 
   const scoreColor = (s: number) => s >= 90 ? "#22c55e" : s >= 70 ? "#eab308" : "#ef4444";
 
