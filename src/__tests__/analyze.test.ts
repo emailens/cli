@@ -52,7 +52,7 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("analyze: source positions", () => {
   test("--json reports every place the property breaks", async () => {
-    const { stdout } = await cli("analyze", file, "-c", "outlook-windows", "--json");
+    const { stdout } = await cli("analyze", file, "-c", "outlook-windows-legacy", "--json");
     const warning = JSON.parse(stdout).warnings.find(
       (w: { property: string }) => w.property === "border-radius",
     );
@@ -71,7 +71,7 @@ describe("analyze: source positions", () => {
   test("a character reference before an offender does not shift its position", async () => {
     // `&amp;` on line 5 decodes shorter than its source; the offender after it
     // must still resolve to its real offset.
-    const { stdout } = await cli("analyze", file, "-c", "outlook-windows", "--json");
+    const { stdout } = await cli("analyze", file, "-c", "outlook-windows-legacy", "--json");
     const warning = JSON.parse(stdout).warnings.find(
       (w: { property: string }) => w.property === "border-radius",
     );
@@ -80,14 +80,14 @@ describe("analyze: source positions", () => {
   });
 
   test("the terminal output says where, and how many others", async () => {
-    const { stdout } = await cli("analyze", file, "-c", "outlook-windows");
+    const { stdout } = await cli("analyze", file, "-c", "outlook-windows-legacy");
     expect(stdout).toMatch(/border-radius \(4:15 \+1 more\)/);
   });
 
   test("a single occurrence prints a position with no count", async () => {
     const one = join(dir, "one.html");
     writeFileSync(one, '<html lang="en"><body>\n  <div style="border-radius:8px">a</div>\n</body></html>');
-    const { stdout } = await cli("analyze", one, "-c", "outlook-windows");
+    const { stdout } = await cli("analyze", one, "-c", "outlook-windows-legacy");
     expect(stdout).toMatch(/border-radius \(2:15\)/);
     expect(stdout).not.toMatch(/more\)/);
   });
