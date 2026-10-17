@@ -7,6 +7,7 @@ import exportCmd from "./commands/export.js";
 import fix from "./commands/fix.js";
 import audit from "./commands/audit.js";
 import lint from "./commands/lint.js";
+import inbox from "./commands/inbox.js";
 
 const main = defineCommand({
   meta,
@@ -18,6 +19,7 @@ const main = defineCommand({
     fix,
     audit,
     lint,
+    inbox,
   },
 });
 

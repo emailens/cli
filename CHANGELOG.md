@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.0 - 2026-10-17
+
+### Added
+
+- **`emailens inbox wait`**, the CI step for what your app actually sends.
+  Your pipeline makes your app send a real email to your Emailens test inbox;
+  this waits for it and fails when it is no longer the email you checked, or
+  changed since it last arrived (a link moved to staging, an emptied
+  variable, signing that stopped passing). Per-send codes, tokens and
+  tracking ids are not changes. Needs `EMAILENS_API_KEY`. Exit codes: 0 pass,
+  1 changed, 2 nothing arrived or Emailens unreachable.
+
 ## 0.8.0 - 2026-10-17
 
 ### Changed

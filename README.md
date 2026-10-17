@@ -177,6 +177,41 @@ Exit codes:
 - `1`: errors found
 - `2`: warnings only (with `--fail-on-warning` or `--max-warnings` exceeded)
 
+### `emailens inbox wait`
+
+The CI step for what your app actually sends. Make your app send a real email
+(sign-up, reset, receipt) to your Emailens test inbox, then wait for it. It
+fails when the email is no longer the one you checked in Emailens, or changed
+since it last arrived: a link moved to staging, an emptied variable, a new
+line, an image gone, a size jump, signing that stopped passing. Codes, tokens
+and tracking ids differ on every send and do not count.
+
+```bash
+export EMAILENS_API_KEY=...            # app.emailens.dev/dashboard/api
+SINCE=$(date +%s000)                   # before the send
+npm run send-signup-email              # your app sends it
+emailens inbox wait --subject "Welcome" --since "$SINCE"
+```
+
+```
+  Welcome to Acme from Acme <hi@acme.dev>
+
+  Your check       Same as "Welcome", apart from the links your email service wrapped.
+  Since last time  Changed since last time: 1 change.
+
+  ✗ 1 link points somewhere else: "finish setup" went to staging.acme.dev.
+
+  ✗ Fail: 1 change
+```
+
+Options: `--subject`, `--sender`, `--inbox <id>`, `--since` (ISO time, epoch
+ms, or a duration such as `5m`; default 2 minutes back), `--timeout` (seconds,
+default 60, at most 600), `--fail-on all|check|drift|none` (default `all`),
+`--json`. An email you never checked, and its first arrival, pass and say so.
+
+Exit codes: `0` pass, `1` changed, `2` nothing arrived or Emailens could not be
+reached.
+
 ### `emailens clients`
 
 List all 21 supported clients.
