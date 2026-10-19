@@ -200,6 +200,10 @@ export default defineCommand({
         ].filter(Boolean).join(" | ");
 
         console.log(summary);
+        // One line, the only route from a local lint to the hosted product.
+        console.log(pc.dim(totalErrors > 0
+          ? "See it on real Outlook, Gmail and Apple Mail: https://emailens.dev/real-devices?utm_source=cli&utm_medium=lint"
+          : "Check the email your app actually sends, on every deploy: https://emailens.dev/sandbox?utm_source=cli&utm_medium=lint"));
       }
 
       // Exit codes
