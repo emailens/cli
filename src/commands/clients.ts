@@ -23,7 +23,7 @@ export default defineCommand({
         engine: c.engine,
         darkModeSupport: c.darkModeSupport,
       }));
-      console.log(JSON.stringify(data, null, 2));
+      console.log(JSON.stringify(data));
       return;
     }
 

@@ -60,6 +60,10 @@ export default defineCommand({
       type: "boolean",
       description: "Output as JSON",
     },
+    info: {
+      type: "boolean",
+      description: "List info findings too: safe fallbacks, not problems (counted, not listed, by default)",
+    },
     failOnWarning: {
       type: "boolean",
       description: "Exit 2 if warnings found",
@@ -164,20 +168,26 @@ export default defineCommand({
 
       // Output
       if (args.json) {
-        console.log(JSON.stringify({ files: results, totalErrors, totalWarnings }, null, 2));
+        // Compact: the usual reader is a program or an agent paying per token.
+        console.log(JSON.stringify({ files: results, totalErrors, totalWarnings }));
       } else {
         for (const result of results) {
           console.log(pc.underline(result.file));
-          if (result.issues.length === 0) {
+          // Info is a safe fallback, not a problem. Listed, it was most of the
+          // output and buried the warnings: agents in the coding-agent
+          // benchmark stopped with real warnings left among dozens of infos.
+          const shown = args.info ? result.issues : result.issues.filter((i) => i.severity !== "info");
+          const hidden = result.issues.length - shown.length;
+          if (shown.length === 0) {
             console.log(`  ${pc.green("pass")}  No issues found`);
           } else {
             // Only reserve the position column when this file has positions to
             // show; compiled sources never do.
-            const width = result.issues.reduce(
+            const width = shown.reduce(
               (w, i) => (i.loc ? Math.max(w, `${i.loc.line}:${i.loc.column}`.length) : w),
               0,
             );
-            for (const issue of result.issues) {
+            for (const issue of shown) {
               const sev = issue.severity === "error"
                 ? pc.red("error")
                 : issue.severity === "warning"
@@ -188,6 +198,9 @@ export default defineCommand({
                 : "";
               console.log(`  ${sev}  ${pos}${pc.dim(issue.category.padEnd(18))}  ${pc.bold(issue.rule.padEnd(22))}  ${issue.message}`);
             }
+          }
+          if (hidden > 0) {
+            console.log(pc.dim(`  ${hidden} info: safe fallbacks, not problems. --info lists them.`));
           }
           console.log();
         }

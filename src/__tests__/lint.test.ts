@@ -305,7 +305,9 @@ describe("lint: source positions", () => {
   });
 
   test("the terminal output shows line:col next to each located issue", async () => {
-    const { stdout } = await cli("lint", located);
+    // --info: an uncovered border-radius is info since engine 0.16.4, and info
+    // is counted rather than listed by default. Positions are what this tests.
+    const { stdout } = await cli("lint", located, "--info");
 
     expect(stdout).toMatch(/9:6\s+links\s+insecure-link/);
     expect(stdout).toMatch(/4:13\s+\S*outlook\S*\s+border-radius/);
@@ -545,5 +547,33 @@ describe("lint: client targeting", () => {
     const { stdout } = await cli("lint", deprecatedHack, "--json", "--skip", "targeting");
     const issues = JSON.parse(stdout).files[0].issues as Array<{ category: string }>;
     expect(issues.some((i) => i.category === "targeting")).toBe(false);
+  });
+});
+
+describe("lint: info is counted, not listed", () => {
+  test("the terminal lists warnings and counts info; --info lists it", async () => {
+    // The warns fixture carries info findings beside its position warning.
+    const { stdout } = await cli("lint", warns);
+    expect(stdout).toContain("position");
+    expect(stdout).not.toMatch(/^\s+info\s/m);
+    const count = Number(stdout.match(/(\d+) info: safe fallbacks/)?.[1]);
+    expect(count).toBeGreaterThan(0);
+
+    const all = await cli("lint", warns, "--info");
+    expect(all.stdout.match(/^\s+info\s/gm)?.length).toBe(count);
+    expect(all.stdout).not.toContain("safe fallbacks");
+  });
+
+  test("--json keeps every finding, info included, on one line", async () => {
+    const { stdout } = await cli("lint", warns, "--json");
+    expect(stdout.trim().split("\n")).toHaveLength(1);
+    const issues = JSON.parse(stdout).files[0].issues as Array<{ severity: string }>;
+    expect(issues.some((i) => i.severity === "info")).toBe(true);
+  });
+
+  test("a file with only info passes", async () => {
+    const { stdout, exitCode } = await cli("lint", clean);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("No issues found");
   });
 });

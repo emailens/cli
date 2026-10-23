@@ -165,7 +165,8 @@ emailens lint email.html --max-warnings 5
 | Flag | Alias | Description |
 |------|-------|-------------|
 | `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle`. `.vue` is `maizzle`. A pasted Vue file with no flag is detected. |
-| `--json` | | Output as JSON |
+| `--json` | | Output as JSON, one line, every finding including info |
+| `--info` | | List info findings too. By default they are counted, not listed: they are safe fallbacks, not problems |
 | `--fail-on-warning` | | Exit 2 if warnings found |
 | `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |
 | `--targeting-policy` | | `progressive` (default), `strict`, or `lenient` |

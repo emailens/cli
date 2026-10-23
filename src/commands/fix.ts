@@ -80,7 +80,7 @@ export default defineCommand({
 
       if (warnings.length === 0) {
         if (args.json) {
-          console.log(JSON.stringify({ message: "No issues found", code: source }, null, 2));
+          console.log(JSON.stringify({ message: "No issues found", code: source }));
         } else {
           console.log(pc.green("\n  No compatibility issues found, nothing to fix.\n"));
         }
@@ -132,7 +132,7 @@ export default defineCommand({
 
       if (args.estimate) {
         if (args.json) {
-          console.log(JSON.stringify(estimate, null, 2));
+          console.log(JSON.stringify(estimate));
         } else {
           console.log(`\n  ${pc.bold("Token Estimate")}`);
           console.log(`  Input tokens:    ~${estimate.inputTokens.toLocaleString()}`);
@@ -213,7 +213,7 @@ export default defineCommand({
           targetedWarnings: result.targetedWarnings,
           structuralCount: result.structuralCount,
           tokenEstimate: result.tokenEstimate,
-        }, null, 2));
+        }));
       } else {
         console.log("\n" + result.code);
       }

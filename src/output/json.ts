@@ -102,5 +102,5 @@ export function printJson(opts: {
   transforms?: TransformResult[];
   darkMode?: Record<string, { html: string; warnings: CSSWarning[] }>;
 }): void {
-  console.log(JSON.stringify(formatJsonOutput(opts), null, 2));
+  console.log(JSON.stringify(formatJsonOutput(opts)));
 }

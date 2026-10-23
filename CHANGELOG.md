@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.10.0 - 2026-10-23
+
+### Changed
+
+- **Engine 0.16.7** (was 0.15.0). Findings a client falls back from safely
+  are info, not warnings: responsive and dark-mode `@media`, `<style>`, and a
+  `border-radius` Outlook Classic draws square. `lint` stops telling you to
+  delete them, which coding agents did to get a clean run, and a build with
+  `--fail-on-warning` stops failing on them. Also from the engine: a body
+  background repeated on the wrapper is no longer reported lost, and the
+  Outlook Classic preview matches real Outlook 2016 and 2019.
+- **`lint` lists errors and warnings, and counts info.** On an agent-written
+  email the terminal output went from 5,633 to 1,211 characters, with its two
+  warnings no longer among 17 infos. `--info` lists them all. Exit codes do
+  not change: info never failed a build.
+- **`--json` is one line** for `lint`, `audit`, `analyze`, `preview`, `fix` and
+  `clients`: its reader is a program or an agent. The shape does not change,
+  and `lint --json` still carries every finding, info included. `export`
+  still writes indented JSON, for people.
+
+### Added
+
+- **One line to the hosted next step** after `lint`: real devices when it
+  found errors, the test inbox when it did not.
+
 ## 0.9.0 - 2026-10-17
 
 ### Added

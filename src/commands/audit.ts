@@ -78,7 +78,7 @@ export default defineCommand({
 
       // Output
       if (args.json) {
-        console.log(JSON.stringify(report, null, 2));
+        console.log(JSON.stringify(report));
       } else {
         // Compatibility section
         if (!skip.includes("compatibility")) {
