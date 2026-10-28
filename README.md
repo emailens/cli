@@ -10,44 +10,29 @@
 [![CI](https://github.com/emailens/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/emailens/cli/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@emailens/cli)](https://www.npmjs.com/package/@emailens/cli)
 [![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/emailens/mcp)
-[![GitHub stars](https://img.shields.io/github/stars/emailens/cli?style=flat)](https://github.com/emailens/cli/stargazers)
 
 </div>
 
-Your email looks perfect in Apple Mail. Gmail strips half the CSS. Outlook renders it in Word.
+```text
+$ emailens lint emails/welcome.html --fail-on-warning
+emails/welcome.html
+  warn   6:17  outlook-windows-legacy  display:flex            Outlook Classic receives this flex box. The MSO branch needs a table.
+  warn   6:30  outlook-windows-legacy,yahoo-mail,yahoo-mail-android+2  gap                     Outlook Classic does not support "gap".
+  warn   6:39  outlook-windows-legacy,outlook-windows-legacy  padding                 Outlook Classic drops this padding. Put it on a table cell, or set mso-padding-alt on one.
+  warn         inboxPreview        preheader-too-short     Preheader is only 22 characters, so email clients may backfill with body text (recommended: 30+).
+  9 info: safe fallbacks, not problems. --info lists them.
 
-`@emailens/cli` checks HTML, React Email, MJML, and Maizzle against real client behavior across 21 email clients. It flags compatibility issues before they ship, in your terminal, in CI, or in your AI workflow.
+1 file | 4 warnings
 
-The quickest way to try it:
-
-```bash
-npx @emailens/cli lint email.html
+Failed: 4 warnings found (--failOnWarning)
+See it rendered in Gmail, Outlook and Apple Mail, no signup: https://app.emailens.dev/try?utm_source=cli&utm_medium=lint
 ```
 
-If you want a hosted preview, screenshots, and team workflows, see [emailens.dev](https://emailens.dev).
-
-## Why Emailens
-
-Email clients are the hardest frontend target in existence. Every client has different CSS support, different rendering engines, and different failure modes.
-
-Emailens gives you:
-
-- per-client compatibility scoring across 21 clients
-- file:line reporting for HTML inputs
-- CI-safe exit codes for build pipelines
-- support for React Email, MJML, Maizzle, and raw HTML
-- local/offline usage with no account required
-
-## The ecosystem
-
-| Project | Purpose | Start here |
-|---|---|---|
-| [@emailens/engine](https://github.com/emailens/engine) | Core analysis engine and library API | If you want to build on top of it |
-| [@emailens/cli](https://github.com/emailens/cli) | Terminal linting and CI checks | Best first stop |
-| [@emailens/mcp](https://github.com/emailens/mcp) | Claude/Cursor/AI agent integration | If you want AI-assisted email QA |
-| [emailens/action](https://github.com/emailens/action) | GitHub Action quality gate | If you want PR blocking |
-| [emailens/vscode](https://github.com/emailens/vscode) | VS Code linting and preview | If you want editor feedback |
-| [emailens.dev](https://emailens.dev) | Hosted previews, screenshots, team workflows | If you want team-grade QA and shareable reports |
+That is a flex row with a rounded button, checked against 21 email clients.
+Each finding has its line:column, and the exit code (here 2) fails the build.
+The rounded corners are among the 9 info findings: Outlook Classic draws them
+square, a safe fallback rather than a problem. The last line appears only when
+the check fails; `--quiet` drops it, and `--json` never has it.
 
 ## Install
 
@@ -55,112 +40,43 @@ Emailens gives you:
 npm install -g @emailens/cli
 ```
 
-Or use it without installing:
+## Run
 
 ```bash
-npx @emailens/cli lint email.html
+emailens lint 'emails/*.html'
 ```
 
-Maizzle HTML needs `@maizzle/framework@5` installed beside the CLI. A `.vue` file needs `@maizzle/framework@6`. One install is one major.
+Or without installing: `npx @emailens/cli lint email.html`. HTML, React Email
+(`.tsx`/`.jsx`), MJML and Maizzle are detected from the extension and compiled
+first, so the check runs on the HTML that would be sent. No account and no
+network: the analysis runs locally.
 
-## Quick start
+Exit codes: `0` clean, `1` errors, `2` warnings with `--fail-on-warning`, or
+more than `--max-warnings`.
 
-### Check a single file
+## Why not caniemail, or React Email's own checker?
 
-```bash
-emailens analyze email.html
-emailens analyze email.html --clients gmail-web,outlook-windows
-emailens analyze email.html --json
-```
+[Can I email](https://www.caniemail.com) is the support table: one feature,
+every client. It does not read your email. This CLI's support data is generated
+from caniemail's (synced 2026-10-27), plus the cells a real-device screenshot
+contradicted, each marked "Observed" with its date. What the CLI adds is the
+reading: it finds the features your file uses, points at the line, scores each
+client, and exits non-zero.
 
-### Lint in CI
+[React Email 4](https://resend.com/blog/react-email-4) added a compatibility
+checker, also powered by Can I email, to its preview. Its CLI (`email dev`,
+`build`, `start`, `export`) has no check command and no exit code for CI, per
+[its docs](https://react.email/docs/cli). This CLI reads React Email files as
+well as MJML, Maizzle and plain HTML, and fails the build.
 
-```bash
-npx @emailens/cli lint 'emails/**/*.{html,tsx,mjml}' --fail-on-warning
-```
+Beyond CSS support, `lint` checks what neither covers: spam signals, links,
+accessibility, images, the inbox preview text, size, template variables,
+overflow, dark-mode and mobile contrast, Outlook VML, styles a client drops, and
+client-targeting hacks.
 
-### Preview a render
+## Extras
 
-```bash
-emailens preview email.html
-emailens preview email.html --dark-mode
-emailens preview email.html --screenshots --out ./screenshots
-```
-
-### Fix common issues
-
-```bash
-emailens fix email.html
-emailens fix email.html -o fixed.html
-```
-
-## What the output looks like
-
-```text
-src/emails/welcome.html
-  error  12:8  outlook-windows     border-radius     Not supported in Outlook Windows
-  warn          spam               caps-ratio        20%+ of words are ALL CAPS
-
-2 files | 1 error | 1 warning
-```
-
-This is intentionally readable in a terminal and structured enough for CI, editors, and agents.
-
-## Supported formats
-
-Point it at:
-
-- HTML
-- JSX / React Email
-- MJML
-- Maizzle
-
-Format is detected from the file extension, and the CLI compiles your template before it analyzes the actual HTML that would be sent.
-
-## Commands
-
-### `emailens analyze <file>`
-
-Analyze CSS compatibility and get per-client scores.
-
-```bash
-emailens analyze email.html
-emailens analyze email.html --clients gmail-web,outlook-windows
-emailens analyze email.html --json
-cat email.html | emailens analyze -
-```
-
-### `emailens preview <file>`
-
-Full preview pipeline: transforms, analysis, dark mode simulation, and optional screenshots.
-
-```bash
-emailens preview email.html
-emailens preview email.html --dark-mode
-emailens preview email.html --screenshots --out ./screenshots
-emailens preview email.html --json
-```
-
-### `emailens export <file>`
-
-Export a self-contained HTML or JSON report.
-
-```bash
-emailens export email.html -o ./report
-emailens export email.html --json -o ./report
-```
-
-### `emailens lint <file|glob>`
-
-CI-friendly linting with structured exit codes.
-
-```bash
-emailens lint email.html
-emailens lint src/*.html
-emailens lint email.html --json
-emailens lint email.html --fail-on-warning
-emailens lint email.html --max-warnings 5
-```
+### `lint` options
 
 | Flag | Alias | Description |
 |------|-------|-------------|
@@ -168,15 +84,30 @@ emailens lint email.html --max-warnings 5
 | `--json` | | Output as JSON, one line, every finding including info |
 | `--info` | | List info findings too. By default they are counted, not listed: they are safe fallbacks, not problems |
 | `--fail-on-warning` | | Exit 2 if warnings found |
+| `--max-warnings` | | Fail if more than n warnings |
+| `--quiet` | `-q` | No line about the hosted preview after a failure |
 | `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |
 | `--targeting-policy` | | `progressive` (default), `strict`, or `lenient` |
-| `--max-warnings` | | Fail if more than n warnings |
 
-Exit codes:
+A `.emailensrc` in the project, the file the VS Code extension reads, can set
+rule severities and skips; `--skip` on the command line wins.
 
-- `0`: clean
-- `1`: errors found
-- `2`: warnings only (with `--fail-on-warning` or `--max-warnings` exceeded)
+Maizzle HTML needs `@maizzle/framework@5` installed beside the CLI. A `.vue`
+file needs `@maizzle/framework@6`. One install is one major.
+
+### Other commands
+
+```bash
+emailens analyze email.html                    # score per client, findings by client
+emailens analyze email.html --clients gmail-web,outlook-windows --json
+emailens audit email.html                      # compatibility plus every other check
+emailens preview email.html --dark-mode        # transforms, analysis, dark mode simulation
+emailens preview email.html --screenshots --out ./shots  # needs BROWSERLESS_URL and playwright-core
+emailens export email.html -o ./report         # self-contained HTML report (--json for JSON)
+emailens fix email.html -o fixed.html          # AI fix, needs ANTHROPIC_API_KEY (--estimate: tokens only)
+emailens clients                               # the 21 clients
+cat email.html | emailens analyze -            # stdin
+```
 
 ### `emailens inbox wait`
 
@@ -185,7 +116,7 @@ The CI step for what your app actually sends. Make your app send a real email
 fails when the email is no longer the one you checked in Emailens, or changed
 since it last arrived: a link moved to staging, an emptied variable, a new
 line, an image gone, a size jump, signing that stopped passing. Codes, tokens
-and tracking ids differ on every send and do not count.
+and tracking ids differ on every send and do not count. It needs an API key.
 
 ```bash
 export EMAILENS_API_KEY=...            # app.emailens.dev/dashboard/api
@@ -194,84 +125,41 @@ npm run send-signup-email              # your app sends it
 emailens inbox wait --subject "Welcome" --since "$SINCE"
 ```
 
-```
-  Welcome to Acme from Acme <hi@acme.dev>
-
-  Your check       Same as "Welcome", apart from the links your email service wrapped.
-  Since last time  Changed since last time: 1 change.
-
-  ✗ 1 link points somewhere else: "finish setup" went to staging.acme.dev.
-
-  ✗ Fail: 1 change
-```
-
 Options: `--subject`, `--sender`, `--inbox <id>`, `--since` (ISO time, epoch
 ms, or a duration such as `5m`; default 2 minutes back), `--timeout` (seconds,
 default 60, at most 600), `--fail-on all|check|drift|none` (default `all`),
-`--json`. An email you never checked, and its first arrival, pass and say so.
+`--json`. Exit codes: `0` pass, `1` changed, `2` nothing arrived or Emailens
+could not be reached.
 
-Exit codes: `0` pass, `1` changed, `2` nothing arrived or Emailens could not be
-reached.
-
-### `emailens clients`
-
-List all 21 supported clients.
-
-```bash
-emailens clients
-emailens clients --json
-```
-
-## GitHub Actions
-
-Add a PR gate to fail builds when email regressions appear:
+### In GitHub Actions
 
 ```yaml
-name: Email lint
-
-on:
-  pull_request:
-    paths:
-      - 'emails/**'
-      - 'src/emails/**'
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Lint emails
-        run: npx -y @emailens/cli lint 'emails/**/*.{html,tsx,mjml}' --fail-on-warning
+- uses: actions/setup-node@v4
+  with:
+    node-version: 22
+- run: npx -y @emailens/cli lint 'emails/*.html' --fail-on-warning
 ```
 
-## AI and MCP
+`**` globs are not supported: use a single-level wildcard or list the files.
+For scores per client in a pull request comment, use the
+[Action](https://github.com/emailens/action).
 
-Prefer AI? Use the [MCP server](https://github.com/emailens/mcp). It gives your coding agent access to the same analysis engine and lets it preview, audit, fix, and diff email templates.
+### Hosted
 
-```bash
-claude mcp add emailens -- npx -y @emailens/mcp
-```
+[app.emailens.dev/try](https://app.emailens.dev/try?utm_source=cli&utm_medium=readme)
+renders the email per client: five clients with no account, all 21 with a free
+one. The + Real plans add real-device screenshots: Outlook on Windows and Mac,
+Apple Mail on Mac and iPad, and Gmail, Yahoo and Proton on the web.
 
-## Why not just use the hosted app?
+## Ecosystem
 
-You can. But the open-source tools are what let developers:
-
-- validate before a push
-- fail CI before a broken email ships
-- run audits offline
-- keep email QA in their editor and terminal
-- build local automation without signing up for a platform
-
-The hosted SaaS adds screenshot previews, shared reports, and team workflows. The OSS tools give you the developer-first layer.
+| Project | What it is |
+|---|---|
+| [@emailens/engine](https://github.com/emailens/engine) | The analysis engine this CLI runs, as a library |
+| [@emailens/mcp](https://github.com/emailens/mcp) | The same checks for coding agents: `claude mcp add emailens -- npx -y @emailens/mcp` |
+| [emailens/action](https://github.com/emailens/action) | GitHub Action: fails the build, and can comment the scores per client on the pull request |
+| [emailens/vscode](https://github.com/emailens/vscode) | VS Code extension: findings and preview in the editor |
 
 ## License
 
 MIT
-
----
-
-If this saved you from an Outlook surprise, [a star](https://github.com/emailens/cli) helps other email developers find it.
-

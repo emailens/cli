@@ -77,6 +77,11 @@ export default defineCommand({
       type: "string",
       description: "Fail if more than n warnings",
     },
+    quiet: {
+      type: "boolean",
+      alias: "q",
+      description: "Suppress decorations: no hosted-preview line after a failure",
+    },
   },
   async run({ args }) {
     try {
@@ -213,28 +218,28 @@ export default defineCommand({
         ].filter(Boolean).join(" | ");
 
         console.log(summary);
-        // One line, the only route from a local lint to the hosted product.
-        console.log(pc.dim(totalErrors > 0
-          ? "See it on real Outlook, Gmail and Apple Mail: https://emailens.dev/real-devices?utm_source=cli&utm_medium=lint"
-          : "Check the email your app actually sends, on every deploy: https://emailens.dev/sandbox?utm_source=cli&utm_medium=lint"));
       }
 
-      // Exit codes
+      // The exit code, decided once so the human output can follow it.
+      let exitCode = 0;
+      let reason: string | null = null;
       if (totalErrors > 0) {
-        process.exit(1);
+        exitCode = 1;
+      } else if (args.failOnWarning && totalWarnings > 0) {
+        exitCode = 2;
+        reason = pc.yellow(`\nFailed: ${totalWarnings} warning${totalWarnings === 1 ? "" : "s"} found (--failOnWarning)`);
+      } else if (Number.isFinite(maxWarnings) && totalWarnings > maxWarnings) {
+        exitCode = 2;
+        reason = pc.red(`\nExceeded max warnings: ${totalWarnings} > ${maxWarnings}`);
       }
-      if (args.failOnWarning && totalWarnings > 0) {
-        if (!args.json) {
-          console.error(pc.yellow(`\nFailed: ${totalWarnings} warning${totalWarnings === 1 ? "" : "s"} found (--failOnWarning)`));
-        }
-        process.exit(2);
+
+      if (!args.json) {
+        if (reason) console.error(reason);
+        const hint = failureHint(exitCode, { quiet: args.quiet });
+        if (hint) console.log(pc.dim(hint));
       }
-      if (Number.isFinite(maxWarnings) && totalWarnings > maxWarnings) {
-        if (!args.json) {
-          console.error(pc.red(`\nExceeded max warnings: ${totalWarnings} > ${maxWarnings}`));
-        }
-        process.exit(2);
-      }
+
+      if (exitCode !== 0) process.exit(exitCode);
     } catch (err) {
       if (err instanceof CompileError) {
         console.error(pc.red(`Compilation failed (${err.phase}): ${err.message}`));
@@ -245,6 +250,20 @@ export default defineCommand({
     }
   },
 });
+
+/**
+ * The one line from a failed local lint to the hosted product: the same email
+ * rendered per client, which a list of findings cannot show. /try needs no
+ * account. Failures only (a clean run is not an occasion to sell), never in
+ * --json, and --quiet drops it. Exported for the tests.
+ */
+export const HOSTED_HINT =
+  "See it rendered in Gmail, Outlook and Apple Mail, no signup: https://app.emailens.dev/try?utm_source=cli&utm_medium=lint";
+
+export function failureHint(exitCode: number, options: { quiet?: boolean } = {}): string | null {
+  if (exitCode === 0 || options.quiet) return null;
+  return HOSTED_HINT;
+}
 
 type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival" | "targeting";
 

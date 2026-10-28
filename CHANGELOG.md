@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **`lint` prints its hosted line only when the check fails**, after the
+  results: "See it rendered in Gmail, Outlook and Apple Mail, no signup", to
+  app.emailens.dev/try, which needs no account. A clean run, or warnings that
+  do not fail the build, print no link. Before, every run ended with one, and
+  the failure line pointed at a marketing page.
+- **`lint --quiet` (`-q`)** drops that line, as `--quiet` drops decorations in
+  the other commands. `--json` never had it.
+- README: a real output sample first, then install, one command, and how this
+  differs from caniemail and React Email's checker.
+
 ## 0.10.0 - 2026-10-23
 
 ### Changed

@@ -6,6 +6,7 @@ import { EMAIL_CLIENTS, MAX_WARNING_LOCATIONS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
 import { positionsApply } from "../utils.js";
+import { failureHint, HOSTED_HINT } from "../commands/lint.js";
 
 /**
  * End-to-end tests for `emailens lint`.
@@ -575,5 +576,66 @@ describe("lint: info is counted, not listed", () => {
     const { stdout, exitCode } = await cli("lint", clean);
     expect(exitCode).toBe(0);
     expect(stdout).toContain("No issues found");
+  });
+});
+
+describe("lint: the hosted line after a failure", () => {
+  const URL = "https://app.emailens.dev/try";
+
+  test("an error prints it once, after the summary", async () => {
+    const { exitCode, stdout } = await cli("lint", errors);
+    expect(exitCode).toBe(1);
+    expect(stdout.split(URL)).toHaveLength(2);
+    const lines = stdout.trimEnd().split("\n");
+    expect(lines.at(-1)).toContain(URL);
+    expect(lines.at(-2)).toMatch(/1 file \| \d+ error/);
+  });
+
+  test("warnings that fail the build (--failOnWarning) print it", async () => {
+    const { exitCode, stdout } = await cli("lint", warns, "--failOnWarning");
+    expect(exitCode).toBe(2);
+    expect(stdout).toContain(URL);
+  });
+
+  test("--maxWarnings exceeded prints it", async () => {
+    const { exitCode, stdout } = await cli("lint", warns, "--maxWarnings", "0");
+    expect(exitCode).toBe(2);
+    expect(stdout).toContain(URL);
+  });
+
+  test("a clean run prints no link at all", async () => {
+    const { exitCode, stdout } = await cli("lint", clean);
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toContain("emailens.dev");
+  });
+
+  test("warnings that do not fail the build print no link", async () => {
+    const { exitCode, stdout } = await cli("lint", warns);
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toContain("emailens.dev");
+  });
+
+  test("--json never carries it: stdout is the JSON and nothing else", async () => {
+    const { exitCode, stdout, stderr } = await cli("lint", errors, "--json");
+    expect(exitCode).toBe(1);
+    expect(() => JSON.parse(stdout)).not.toThrow();
+    expect(stdout.trim().split("\n")).toHaveLength(1);
+    expect(stdout + stderr).not.toContain(URL);
+  });
+
+  test("--quiet and -q suppress it, and the exit code stays", async () => {
+    for (const flag of ["--quiet", "-q"]) {
+      const { exitCode, stdout, stderr } = await cli("lint", errors, flag);
+      expect(exitCode).toBe(1);
+      expect(stdout + stderr).not.toContain(URL);
+      expect(stdout).toContain("error");
+    }
+  });
+
+  test("the link is the logged-out page, with the CLI's utm tags", () => {
+    expect(HOSTED_HINT).toContain(`${URL}?utm_source=cli&utm_medium=lint`);
+    expect(failureHint(0)).toBeNull();
+    expect(failureHint(1, { quiet: true })).toBeNull();
+    expect(failureHint(2)).toBe(HOSTED_HINT);
   });
 });
