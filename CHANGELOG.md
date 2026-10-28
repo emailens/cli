@@ -1,9 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 - 2026-10-28
 
 ### Changed
 
+- **Engine 0.17.0**: a plain `display:none` preheader is no longer a spam
+  error; new warnings for Gmail on iPhone inverting dark backgrounds, CSS
+  nesting (Tailwind v4 output) and rem units (Outlook Classic, Yahoo, AOL).
+  Some scores go down where those apply.
 - **`lint` prints its hosted line only when the check fails**, after the
   results: "See it rendered in Gmail, Outlook and Apple Mail, no signup", to
   app.emailens.dev/try, which needs no account. A clean run, or warnings that
