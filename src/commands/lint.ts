@@ -13,7 +13,7 @@ import { applySeverities, loadProjectConfig } from "../project-config.js";
 import { readdir } from "node:fs/promises";
 import { resolve, relative } from "node:path";
 
-interface LintIssue {
+export interface LintIssue {
   severity: "error" | "warning" | "info";
   category: string;
   rule: string;
@@ -27,7 +27,7 @@ interface LintIssue {
   locsTruncated?: boolean;
 }
 
-interface LintFileResult {
+export interface LintFileResult {
   file: string;
   issues: LintIssue[];
   errors: number;
@@ -77,6 +77,10 @@ export default defineCommand({
       type: "string",
       description: "Fail if more than n warnings",
     },
+    reporter: {
+      type: "string",
+      description: "Also print findings as GitHub Actions annotations, on the lines of the pull request: github",
+    },
     quiet: {
       type: "boolean",
       alias: "q",
@@ -86,6 +90,11 @@ export default defineCommand({
   async run({ args }) {
     try {
       if (args.format) resolveFormat(args.format);
+      if (args.reporter !== undefined && args.reporter !== "github") {
+        throw new Error(`Unknown reporter "${args.reporter}". Valid: github`);
+      }
+      // Workflow commands share stdout with the JSON, which must stay one parseable line.
+      if (args.reporter && args.json) throw new Error("--reporter github cannot be combined with --json");
       // `.emailensrc`, the same file the editor extension reads. Without this
       // a rule demoted in the editor still fails the build, which is the worst
       // of both: the panel says it does not matter and CI says it does.
@@ -169,6 +178,10 @@ export default defineCommand({
         results.push({ file: relative(process.cwd(), file), issues, errors, warnings });
         totalErrors += errors;
         totalWarnings += warnings;
+      }
+
+      if (args.reporter === "github") {
+        for (const line of githubAnnotations(results, { info: args.info })) console.log(line);
       }
 
       // Output
@@ -263,6 +276,36 @@ export const HOSTED_HINT =
 export function failureHint(exitCode: number, options: { quiet?: boolean } = {}): string | null {
   if (exitCode === 0 || options.quiet) return null;
   return HOSTED_HINT;
+}
+
+/**
+ * GitHub Actions workflow commands, one per finding, so each lands on its line
+ * in the pull request diff. Paths are relative to the checkout, which is what
+ * GitHub matches against; compiled sources have no position and annotate the
+ * file. Info is a safe fallback and stays out unless --info. Exported for the tests.
+ */
+export function githubAnnotations(
+  results: LintFileResult[],
+  options: { info?: boolean; root?: string } = {},
+): string[] {
+  const root = options.root ?? process.env.GITHUB_WORKSPACE ?? process.cwd();
+  const level = { error: "error", warning: "warning", info: "notice" } as const;
+  // https://docs.github.com/actions/reference/workflow-commands-for-github-actions
+  const data = (s: string) => s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  const prop = (s: string) => data(s).replace(/:/g, "%3A").replace(/,/g, "%2C");
+  const lines: string[] = [];
+  for (const result of results) {
+    const file = relative(root, resolve(result.file)).split("\\").join("/");
+    for (const issue of result.issues) {
+      if (issue.severity === "info" && !options.info) continue;
+      const loc = issue.loc ?? issue.locs?.[0];
+      const props = [`file=${prop(file)}`];
+      if (loc) props.push(`line=${loc.line}`, `col=${loc.column}`);
+      props.push(`title=${prop(`emailens ${issue.category}: ${issue.rule}`)}`);
+      lines.push(`::${level[issue.severity]} ${props.join(",")}::${data(issue.message)}`);
+    }
+  }
+  return lines;
 }
 
 type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibility" | "inboxPreview" | "size" | "templateVariables" | "overflow" | "visual" | "darkContrast" | "mobileContrast" | "design" | "vml" | "styleSurvival" | "targeting";

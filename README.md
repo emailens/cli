@@ -85,6 +85,7 @@ client-targeting hacks.
 | `--info` | | List info findings too. By default they are counted, not listed: they are safe fallbacks, not problems |
 | `--fail-on-warning` | | Exit 2 if warnings found |
 | `--max-warnings` | | Fail if more than n warnings |
+| `--reporter github` | | Also print GitHub Actions annotations, so each finding shows on its line in the pull request. Not with `--json` |
 | `--quiet` | `-q` | No line about the hosted preview after a failure |
 | `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |
 | `--targeting-policy` | | `progressive` (default), `strict`, or `lenient` |
@@ -137,8 +138,11 @@ could not be reached.
 - uses: actions/setup-node@v4
   with:
     node-version: 22
-- run: npx -y @emailens/cli lint 'emails/*.html' --fail-on-warning
+- run: npx -y @emailens/cli lint 'emails/*.html' --fail-on-warning --reporter github
 ```
+
+`--reporter github` puts each finding on its line in the pull request's
+changed files.
 
 `**` globs are not supported: use a single-level wildcard or list the files.
 For scores per client in a pull request comment, use the

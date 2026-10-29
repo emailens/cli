@@ -6,7 +6,7 @@ import { EMAIL_CLIENTS, MAX_WARNING_LOCATIONS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
 import { positionsApply } from "../utils.js";
-import { failureHint, HOSTED_HINT } from "../commands/lint.js";
+import { failureHint, githubAnnotations, HOSTED_HINT } from "../commands/lint.js";
 
 /**
  * End-to-end tests for `emailens lint`.
@@ -637,5 +637,54 @@ describe("lint: the hosted line after a failure", () => {
     expect(failureHint(0)).toBeNull();
     expect(failureHint(1, { quiet: true })).toBeNull();
     expect(failureHint(2)).toBe(HOSTED_HINT);
+  });
+});
+
+describe("--reporter github", () => {
+  const root = join(tmpdir(), "repo");
+  const results = [
+    {
+      file: join(root, "emails", "welcome.html"),
+      errors: 1,
+      warnings: 1,
+      issues: [
+        {
+          severity: "error" as const,
+          category: "gmail-web,yahoo-mail",
+          rule: "<form>",
+          message: "removes 100%, then\nmore",
+          loc: { line: 12, column: 5, offset: 300, endLine: 12, endColumn: 11, length: 6 },
+        },
+        { severity: "warning" as const, category: "spam", rule: "caps", message: "loud" },
+        { severity: "info" as const, category: "links", rule: "x", message: "fine" },
+      ],
+    },
+  ];
+
+  test("one workflow command per finding, on its line, escaped, info left out", () => {
+    expect(githubAnnotations(results, { root })).toEqual([
+      "::error file=emails/welcome.html,line=12,col=5,title=emailens gmail-web%2Cyahoo-mail%3A <form>::removes 100%25, then%0Amore",
+      "::warning file=emails/welcome.html,title=emailens spam%3A caps::loud",
+    ]);
+  });
+
+  test("--info adds notices", () => {
+    expect(githubAnnotations(results, { root, info: true })).toHaveLength(3);
+  });
+
+  test("prints annotations from the real command", () => {
+    const dir = mkdtempSync(join(tmpdir(), "emailens-gh-"));
+    try {
+      const file = join(dir, "e.html");
+      writeFileSync(file, `<html><body><form action="https://x.test/s"><input type="email"></form></body></html>`);
+      const out = Bun.spawnSync(["bun", ENTRY, "lint", file, "--reporter", "github", "-q"], {
+        env: { ...process.env, GITHUB_WORKSPACE: dir },
+      });
+      expect(out.stdout.toString()).toMatch(/^::error file=e\.html,line=\d+,col=\d+,title=emailens /m);
+      const bad = Bun.spawnSync(["bun", ENTRY, "lint", file, "--reporter", "github", "--json"]);
+      expect(bad.exitCode).toBe(1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
