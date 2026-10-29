@@ -366,7 +366,7 @@ function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined): 
 /**
  * Flatten an AuditReport into a unified LintIssue array.
  */
-function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
+export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
   const issues: LintIssue[] = [];
 
   // CSS compatibility warnings → group by property (deduplicate across clients)

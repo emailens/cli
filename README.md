@@ -132,6 +132,23 @@ default 60, at most 600), `--fail-on all|check|drift|none` (default `all`),
 `--json`. Exit codes: `0` pass, `1` changed, `2` nothing arrived or Emailens
 could not be reached.
 
+### In your tests
+
+The same check as `lint`, as an assertion. It throws with every failing
+finding and its line, reads your `.emailensrc`, and works in Vitest, Jest and
+bun:test.
+
+```ts
+import { render } from "@react-email/render";
+import { expectEmailToPass } from "@emailens/cli/test";
+
+test("welcome email passes", async () => {
+  expectEmailToPass(await render(<Welcome name="Ada" />));
+});
+```
+
+Options: `failOnWarning`, `skip` (the `--skip` names), `framework`.
+
 ### In GitHub Actions
 
 ```yaml
