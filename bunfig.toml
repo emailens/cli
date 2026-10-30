@@ -1,0 +1,3 @@
+[test]
+# examples/ have their own package and test runner.
+root = "src"

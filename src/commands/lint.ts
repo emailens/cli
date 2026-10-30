@@ -364,6 +364,15 @@ function mergeLocs(into: SourceLocation[], from: SourceLocation[] | undefined): 
 }
 
 /**
+ * Name the element when there is no line to point at: compiled sources (React
+ * Email, MJML) never have one, and "Low contrast ratio 2.1:1" alone cannot be
+ * acted on. The engine already says which element; it was being dropped.
+ */
+function whereNoLine(message: string, issue: { loc?: SourceLocation; element?: string }): string {
+  return !issue.loc && issue.element ? `${message}: ${issue.element}` : message;
+}
+
+/**
  * Flatten an AuditReport into a unified LintIssue array.
  */
 export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIssue[] {
@@ -448,7 +457,7 @@ export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIs
         severity: issue.severity,
         category: "accessibility",
         rule: issue.rule,
-        message: issue.message,
+        message: whereNoLine(issue.message, issue),
         ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
@@ -535,7 +544,7 @@ export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIs
         severity: issue.severity,
         category: "darkContrast",
         rule: issue.rule,
-        message: issue.message.replace(/^Dark mode: /, ""),
+        message: whereNoLine(issue.message.replace(/^Dark mode: /, ""), issue),
         ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
@@ -547,7 +556,7 @@ export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIs
         severity: issue.severity,
         category: "mobileContrast",
         rule: issue.rule,
-        message: issue.message.replace(/^At mobile width: /, ""),
+        message: whereNoLine(issue.message.replace(/^At mobile width: /, ""), issue),
         ...(issue.loc ? { loc: issue.loc } : {}),
       });
     }
