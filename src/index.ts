@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { defineCommand, runMain } from "citty";
 import { meta } from "./meta.js";
 import analyze from "./commands/analyze.js";

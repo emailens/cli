@@ -4,25 +4,29 @@
   "workspaces": {
     "": {
       "name": "@emailens/cli",
-      "dependencies": {
-        "@emailens/engine": "^0.18.4",
-        "citty": "^0.1.6",
-        "cli-table3": "^0.6.5",
-        "ora": "^8.2.0",
-        "picocolors": "^1.1.1",
-      },
       "devDependencies": {
+        "@anthropic-ai/sdk": "^0.52.0",
+        "@emailens/engine": "^0.18.4",
         "@types/bun": "^1.4.0",
         "@types/mjml": "^4.7.4",
         "@types/node": "^25.9.5",
         "bun-types": "^1.4.0",
+        "citty": "^0.1.6",
+        "cli-table3": "^0.6.5",
+        "ora": "^8.2.0",
+        "picocolors": "^1.1.1",
+        "playwright-core": "^1.62.1",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
       },
-      "optionalDependencies": {
+      "peerDependencies": {
         "@anthropic-ai/sdk": "^0.52.0",
         "playwright-core": "^1.62.1",
       },
+      "optionalPeers": [
+        "@anthropic-ai/sdk",
+        "playwright-core",
+      ],
     },
   },
   "packages": {

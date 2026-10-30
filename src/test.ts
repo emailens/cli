@@ -1,15 +1,45 @@
 import { auditEmail, type AuditOptions } from "@emailens/engine";
-import { flattenToLintIssues, type LintIssue } from "./commands/lint.js";
+import { flattenToLintIssues } from "./commands/lint.js";
 import { applySeverities, loadProjectConfig } from "./project-config.js";
 
-export type { LintIssue };
+// The engine is bundled into the CLI, not installed beside it, so the public
+// types are restated here rather than imported from it. The assignment in
+// expectEmailToPass keeps them in step with the engine's.
+
+/** Where a finding sits in the source. */
+export interface SourceLocation {
+  /** 1-based. */
+  line: number;
+  /** 1-based. */
+  column: number;
+  endLine: number;
+  endColumn: number;
+  /** 0-based character offset. */
+  offset: number;
+  length: number;
+}
+
+export interface LintIssue {
+  severity: "error" | "warning" | "info";
+  category: string;
+  rule: string;
+  message: string;
+  detail?: string;
+  /** HTML sources only. */
+  loc?: SourceLocation;
+  /** Every place a CSS property breaks, in document order. */
+  locs?: SourceLocation[];
+  /** `locs` is capped and does not list every occurrence. */
+  locsTruncated?: boolean;
+}
 
 export interface ExpectEmailOptions {
   /** Fail on warnings too, like `lint --fail-on-warning`. */
   failOnWarning?: boolean;
   /** Checks to skip, the same names as `lint --skip`. */
   skip?: string[];
-  framework?: AuditOptions["framework"];
+  /** The source the HTML was compiled from, for framework-aware notes. */
+  framework?: "jsx" | "mjml" | "maizzle";
 }
 
 /**
@@ -28,7 +58,7 @@ export function expectEmailToPass(html: string, options: ExpectEmailOptions = {}
     skip: skip as AuditOptions["skip"],
     positions: true,
   });
-  const issues = applySeverities(flattenToLintIssues(report, skip), project?.rules);
+  const issues: LintIssue[] = applySeverities(flattenToLintIssues(report, skip), project?.rules);
   const failing = issues.filter(
     (i) => i.severity === "error" || (options.failOnWarning && i.severity === "warning"),
   );
