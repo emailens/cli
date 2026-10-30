@@ -33,3 +33,8 @@ jobs:
       - run: bun test
 
       - run: bun run build
+
+      # The React Email example, against this build: a user's test with
+      # expectEmailToPass. It fails on an engine that reports false dark-mode
+      # errors on an ordinary welcome email.
+      - run: cd examples/react-email && npm install && npm install --no-save ../.. && npx vitest run

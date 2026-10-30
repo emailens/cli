@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.13.1 - 2026-10-30
+
+### Fixed
+
+- A dark-mode, mobile or accessibility finding with no line (common on React
+  Email and MJML sources) now names the element the engine reported, instead
+  of printing only "Low contrast ratio 2.1:1".
+
+### Added
+
+- `examples/react-email`: a welcome email and a vitest test using
+  `expectEmailToPass`, run in CI against the current build.
+
+### Changed
+
+- `@emailens/engine` ^0.18.4: Gmail Android dark mode modelled from the real
+  app (no more false dark-mode errors on ordinary emails), and a Gmail
+  wrapper rule such as `u + #body a { color: inherit !important }` that
+  restyles your buttons is now an error.
+
 ## 0.13.0 - 2026-10-30
 
 ### Added

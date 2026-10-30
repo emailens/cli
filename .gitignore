@@ -3,3 +3,4 @@ dist/
 *.tsbuildinfo
 .env
 .env.*
+examples/*/package-lock.json
