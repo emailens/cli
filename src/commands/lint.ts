@@ -389,11 +389,23 @@ export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIs
       locsTruncated?: boolean;
     }>();
 
+    // The engine copies style-survival, size and VML findings into the
+    // per-client warnings so they count in each client's score. They are
+    // reported below by their own check, with a line, so not again here.
+    const ownCheck = new Set(
+      (["styleSurvival", "size", "vml"] as const)
+        .filter((check) => !skip.includes(check))
+        .flatMap((check) => report[check].issues.map((i) => i.rule)),
+    );
+
     for (const w of report.compatibility.warnings) {
+      if (ownCheck.has(w.property)) continue;
       const key = `${w.property}\0${w.severity}`;
       const existing = seenProps.get(key);
       if (existing) {
-        existing.clients.push(w.client);
+        // One client breaks a property once per selector group (`div`, `td`),
+        // so it comes back here more than once.
+        if (!existing.clients.includes(w.client)) existing.clients.push(w.client);
         // Clients repeat the same finding, but selector groups don't: `div` and
         // `span` breaking one property are separate warnings, so union their
         // occurrences to get every place it actually breaks.
@@ -618,9 +630,11 @@ export function flattenToLintIssues(report: AuditReport, skip: string[]): LintIs
     }
   }
 
-  // Sort: errors first, then warnings, then info
+  // Errors first, then warnings, then info; within each, in document order,
+  // and findings with no line (the whole email, or a compiled source) last.
   const order = { error: 0, warning: 1, info: 2 };
-  issues.sort((a, b) => order[a.severity] - order[b.severity]);
+  const at = (i: LintIssue) => i.loc?.offset ?? Number.MAX_SAFE_INTEGER;
+  issues.sort((a, b) => order[a.severity] - order[b.severity] || at(a) - at(b));
 
   return issues;
 }

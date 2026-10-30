@@ -6,7 +6,7 @@ import { EMAIL_CLIENTS, MAX_WARNING_LOCATIONS } from "@emailens/engine";
 import pkg from "../../package.json" with { type: "json" };
 import { meta } from "../meta.js";
 import { positionsApply } from "../utils.js";
-import { failureHint, githubAnnotations, HOSTED_HINT } from "../commands/lint.js";
+import { failureHint, flattenToLintIssues, githubAnnotations, HOSTED_HINT } from "../commands/lint.js";
 
 /**
  * End-to-end tests for `emailens lint`.
@@ -686,5 +686,57 @@ describe("--reporter github", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("lint: how findings are grouped and ordered", () => {
+  const loc = (line: number, offset: number) => ({ line, column: 1, endLine: line, endColumn: 2, offset });
+  const others = [
+    "spam", "links", "accessibility", "images", "inboxPreview", "size", "templateVariables",
+    "overflow", "visual", "darkContrast", "mobileContrast", "design", "vml", "styleSurvival", "targeting",
+  ];
+  const warning = (
+    client: string,
+    property: string,
+    at?: ReturnType<typeof loc>,
+    severity: "error" | "warning" = "warning",
+  ) => ({
+    client, property, severity, message: `${property} breaks`,
+    ...(at ? { loc: at, locs: [at] } : {}),
+  });
+  const flatten = (warnings: ReturnType<typeof warning>[]) =>
+    flattenToLintIssues({ compatibility: { warnings } } as never, others);
+
+  test("names a client once when it breaks a property through two selectors", () => {
+    const [padding] = flatten([
+      warning("outlook-windows-legacy", "padding", loc(9, 300)),
+      warning("outlook-windows-legacy", "padding", loc(4, 100)),
+      warning("yahoo-mail", "padding", loc(4, 100)),
+    ]);
+    expect(padding.category).toBe("outlook-windows-legacy,yahoo-mail");
+    expect(padding.locs?.map((l) => l.line)).toEqual([4, 9]);
+  });
+
+  test("orders by severity, then by line, with findings that have no line last", () => {
+    const issues = flatten([
+      warning("gmail-web", "box-shadow", loc(20, 500)),
+      warning("gmail-web", "no-line"),
+      warning("gmail-web", "gap", loc(3, 50)),
+      warning("outlook-windows-legacy", "display:flex", loc(30, 900), "error"),
+    ]);
+    expect(issues.map((i) => i.rule)).toEqual(["display:flex", "gap", "box-shadow", "no-line"]);
+  });
+
+  test("reports a style-survival finding once, from its own check with its line", () => {
+    const rule = "gmail-wrapper-overrides-inline";
+    const issues = flattenToLintIssues(
+      {
+        compatibility: { warnings: [warning("gmail-web", rule, undefined, "error"), warning("gmail-android", rule, undefined, "error")] },
+        styleSurvival: { issues: [{ rule, severity: "error", clients: ["gmail-web", "gmail-android"], message: "m", loc: loc(75, 5427) }] },
+      } as never,
+      others.filter((o) => o !== "styleSurvival"),
+    );
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatchObject({ category: "styleSurvival", loc: { line: 75 } });
   });
 });
