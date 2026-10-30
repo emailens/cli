@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.2 - 2026-10-30
+
+### Fixed
+
+- A style-survival, size or VML finding was printed twice, the second time
+  without a line, and counted twice toward the error total and the exit code.
+- A client that breaks one property through two selectors was named twice
+  (`outlook-windows-legacy,outlook-windows-legacy`), which also inflated `+N`.
+- Within a severity, findings follow the document; ones with no line come last.
+
 ## 0.13.1 - 2026-10-30
 
 ### Fixed

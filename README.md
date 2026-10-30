@@ -16,23 +16,25 @@
 ```text
 $ emailens lint emails/welcome.html --fail-on-warning
 emails/welcome.html
-  warn   6:17  outlook-windows-legacy  display:flex            Outlook Classic receives this flex box. The MSO branch needs a table.
-  warn   6:30  outlook-windows-legacy,yahoo-mail,yahoo-mail-android+2  gap                     Outlook Classic does not support "gap".
-  warn   6:39  outlook-windows-legacy,outlook-windows-legacy  padding                 Outlook Classic drops this padding. Put it on a table cell, or set mso-padding-alt on one.
-  warn         inboxPreview        preheader-too-short     Preheader is only 22 characters, so email clients may backfill with body text (recommended: 30+).
-  9 info: safe fallbacks, not problems. --info lists them.
+  warn   7:10  outlook-windows-legacy  display:flex            Outlook Classic receives this flex box. The MSO branch needs a table.
+  warn   7:25  outlook-windows-legacy,yahoo-mail,yahoo-mail-android+2  gap                     Outlook Classic does not support "gap".
+  warn   8:32  gmail-web,outlook-windows-legacy,yahoo-mail-android+2  box-shadow              Gmail does not support "box-shadow".
+  warn   14:5  yahoo-mail          font-family             Yahoo Mail drops an inline font-family that names a quoted font, like 'Courier New': that text shows in Yahoo's own font instead.
+  warn         inboxPreview        preheader-too-short     Preheader is only 21 characters, so email clients may backfill with body text (recommended: 30+).
+  12 info: safe fallbacks, not problems. --info lists them.
 
-1 file | 4 warnings
+1 file | 5 warnings
 
-Failed: 4 warnings found (--failOnWarning)
+Failed: 5 warnings found (--failOnWarning)
 See it rendered in Gmail, Outlook and Apple Mail, no signup: https://app.emailens.dev/try?utm_source=cli&utm_medium=lint
 ```
 
-That is a flex row with a rounded button, checked against 21 email clients.
-Each finding has its line:column, and the exit code (here 2) fails the build.
-The rounded corners are among the 9 info findings: Outlook Classic draws them
-square, a safe fallback rather than a problem. The last line appears only when
-the check fails; `--quiet` drops it, and `--json` never has it.
+That is a welcome email with a flex row and a card shadow, checked against 21
+email clients. Each finding has its line:column, and the exit code (here 2)
+fails the build. The card's rounded corners are among the 12 info findings:
+Outlook Classic draws them square, a safe fallback rather than a problem. The
+last line appears only when the check fails; `--quiet` drops it, and `--json`
+never has it.
 
 ## Install
 
