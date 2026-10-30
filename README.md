@@ -8,8 +8,8 @@
 **The email rendering linter for terminal and CI**
 
 [![CI](https://github.com/emailens/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/emailens/cli/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@emailens/cli?cacheSeconds=86400)](https://www.npmjs.com/package/@emailens/cli)
-[![MCP](https://img.shields.io/badge/MCP-Server-blue)](https://github.com/emailens/mcp)
+[![npm](https://badgen.net/npm/v/@emailens/cli)](https://www.npmjs.com/package/@emailens/cli)
+[![MCP](https://badgen.net/badge/MCP/Server/blue)](https://github.com/emailens/mcp)
 
 </div>
 
