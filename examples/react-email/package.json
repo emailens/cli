@@ -1,0 +1,18 @@
+{
+  "name": "emailens-react-email-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@emailens/cli": "^0.13.0",
+    "vitest": "^5.0.5"
+  }
+}
