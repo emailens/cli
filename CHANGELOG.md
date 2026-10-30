@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.13.0 - 2026-10-30
+
+### Added
+
+- `lint --reporter github` also prints GitHub Actions annotations, so each
+  finding shows on its line in the pull request. Not with `--json`.
+- `@emailens/cli/test`: `expectEmailToPass(html)` runs the `lint` checks as a
+  test assertion and throws with every failing finding and its line. Reads
+  `.emailensrc`; works in Vitest, Jest and bun:test.
+- `skills/emailens/SKILL.md`, an agent skill: build the email, lint the HTML,
+  fix every error before calling the work done.
+
+### Changed
+
+- **Engine 0.18.3**: Yahoo Mail web removes a form's `action` and
+  `formaction`, so a form sent to Yahoo is now an error that says to link to a
+  landing page instead.
+
 ## 0.12.0 - 2026-10-29
 
 ### Changed
