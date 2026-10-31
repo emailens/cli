@@ -11,10 +11,13 @@ export default defineConfig({
   target: "node18",
   // One file for npx: every dependency is bundled, so a cold `npx @emailens/cli`
   // fetches one package instead of ~48 (20 s on a slow line, 2026-10-31).
-  // Only the optional peers stay out: they load when a command needs them.
+  // The Anthropic SDK is bundled too, as a chunk that `fix` alone loads, so
+  // `npx @emailens/cli fix` works out of the box. Only the optional peers stay
+  // out: playwright-core (screenshots, which need your own Browserless anyway)
+  // and the compilers the engine loads for JSX, MJML and Maizzle sources.
   // (noExternal wins over external, so the peers are left out of the pattern.)
-  noExternal: [/^(?!playwright-core|@anthropic-ai\/|isolated-vm|sucrase|react($|\/)|@react-email\/|mjml|@maizzle\/)/],
-  external: ["playwright-core", "@anthropic-ai/sdk", "isolated-vm", "sucrase", "react", "@react-email/components", "@react-email/render", "mjml", "@maizzle/framework"],
+  noExternal: [/^(?!playwright-core|isolated-vm|sucrase|react($|\/)|@react-email\/|mjml|@maizzle\/)/],
+  external: ["playwright-core", "isolated-vm", "sucrase", "react", "@react-email/components", "@react-email/render", "mjml", "@maizzle/framework"],
   esbuildOptions(options) {
     // css-tree reads its data JSON from disk at runtime; its prebuilt module
     // carries the data inline, so the bundle stands alone.

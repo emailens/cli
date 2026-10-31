@@ -31,8 +31,12 @@ export async function captureScreenshots(
     const pw = await import("playwright-core");
     chromium = pw.chromium;
   } catch {
+    // Under npx the CLI runs from npx's own folder, where the project's
+    // node_modules is not visible, so name the forms that work there too.
     throw new Error(
-      'Screenshots require "playwright-core". Install it:\n  npm install playwright-core'
+      'Screenshots require "playwright-core", which is not bundled. Either:\n' +
+      "  npx -p @emailens/cli -p playwright-core emailens export <file> --screenshots\n" +
+      "  npm install -g @emailens/cli playwright-core"
     );
   }
 

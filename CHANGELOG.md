@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.13.3 - 2026-10-31
+
+### Changed
+
+- The CLI ships as one bundled package with no dependencies, so a cold
+  `npx @emailens/cli` fetches one file: 1.2 MB instead of 50 packages
+  (36 MB installed). A fresh install went from about 30 s to 5-6 s on the
+  same connection. Lint output is unchanged, checked on 239 emails.
+- `fix` works as before under npx: the Anthropic SDK is bundled, in a part
+  only `fix` loads.
+- `playwright-core` is an optional peer dependency: npm no longer installs it
+  for every run. It is only used by `export --screenshots`, which needs your
+  own Browserless (`BROWSERLESS_URL`); without it the command says how to add
+  it, including under npx: `npx -p @emailens/cli -p playwright-core emailens ...`.
+- `@emailens/cli/test` carries its own types, without needing the engine
+  installed.
+
 ## 0.13.2 - 2026-10-30
 
 ### Fixed
