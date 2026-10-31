@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.5 - 2026-10-31
+
+### Changed
+
+- **Engine 0.18.7**: Gmail Android dark mode runs the WebView's own rule. Mid-tone
+  text now gets darker, as it does in the app, so some new contrast findings appear
+  and a false warning on light greys goes away.
+
 ## 0.13.4 - 2026-10-31
 
 ### Changed

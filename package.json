@@ -1,6 +1,6 @@
 {
   "name": "@emailens/cli",
-  "version": "0.13.4",
+  "version": "0.13.5",
   "description": "CLI tool for email compatibility analysis: lint, preview and export HTML, MJML, Maizzle and React Email rendering across 21 email clients.",
   "type": "module",
   "bin": {
@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
-    "@emailens/engine": "^0.18.6",
+    "@emailens/engine": "^0.18.7",
     "@types/bun": "^1.4.0",
     "@types/mjml": "^4.7.4",
     "@types/node": "^25.9.5",
