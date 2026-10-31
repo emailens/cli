@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.4 - 2026-10-31
+
+### Changed
+
+- **Engine 0.18.6**: Outlook Classic is modelled on today's build. `display:none`
+  hides a div, span or table, `[if true]` conditionals are read like `[if mso]`,
+  a decimal image `width` is honoured, and a three-digit `bgcolor` paints nothing.
+  Some Outlook Classic findings change.
+
 ## 0.13.3 - 2026-10-31
 
 ### Changed
