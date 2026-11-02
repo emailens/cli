@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.7 - 2026-11-02
+
+### Changed
+
+- **Engine 0.18.9**: a new `vml-pixels-per-inch` warning flags a full email that uses
+  VML without declaring `<o:PixelsPerInch>96</o:PixelsPerInch>`. At 125% display
+  scaling Outlook Classic keeps VML at its pixel size while text grows, so a button
+  can lose part of its label.
+
 ## 0.13.6 - 2026-11-02
 
 ### Changed
