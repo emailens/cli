@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.6 - 2026-11-02
+
+### Changed
+
+- **Engine 0.18.8**: Outlook Classic layout is measured on a current Microsoft 365
+  build: Aptos as the default font, list indents and gaps, merged paragraph borders,
+  bordered links, table margins and `hr` height. Some Outlook Classic findings and
+  previews change.
+
 ## 0.13.5 - 2026-10-31
 
 ### Changed
