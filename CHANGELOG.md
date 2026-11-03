@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.8 - 2026-11-03
+
+### Changed
+
+- **Engine 0.18.10**: the Outlook Classic simulation draws a `display:none` label inside
+  a `<v:textbox>`, as Word does, so a VML button (the Brevo pattern) keeps its label
+  instead of rendering empty.
+
 ## 0.13.7 - 2026-11-02
 
 ### Changed
