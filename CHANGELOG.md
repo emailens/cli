@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.11 - 2026-11-04
+
+### Changed
+
+- **Engine 0.18.13**: an image no inbox can load (relative path, `file:`,
+  localhost, empty `src`) is an error in every client and lowers the score;
+  bare email addresses become links in the clients that link them; Outlook for
+  Mac has a measured dark mode.
+
 ## 0.13.10 - 2026-11-03
 
 ### Changed
