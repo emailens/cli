@@ -6,7 +6,7 @@
       "name": "@emailens/cli",
       "devDependencies": {
         "@anthropic-ai/sdk": "^0.52.0",
-        "@emailens/engine": "^0.18.11",
+        "@emailens/engine": "^0.18.12",
         "@types/bun": "^1.4.0",
         "@types/mjml": "^4.7.4",
         "@types/node": "^25.9.5",
@@ -32,7 +32,7 @@
 
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
 
-    "@emailens/engine": ["@emailens/engine@0.18.11", "", { "dependencies": { "cheerio": "^1.2.0", "css-tree": "^3.1.0" }, "peerDependencies": { "@maizzle/framework": ">=5.0.0 <7.0.0", "@react-email/components": ">=0.0.36", "@react-email/render": ">=1.0.0", "isolated-vm": ">=5.0.0", "mjml": ">=4.0.0", "react": "^18.0.0 || ^19.0.0", "sucrase": "^3.35.0" }, "optionalPeers": ["@maizzle/framework", "@react-email/components", "@react-email/render", "isolated-vm", "mjml", "react", "sucrase"] }, "sha512-2+nAacIS3dHPTs+IzJ/n3LXoaK37scO9Ip3PgC30lcwRCL0aD5javOry4i9RwdSHLyRzN9Jh0J4SADN4TZ+Fvw=="],
+    "@emailens/engine": ["@emailens/engine@0.18.12", "", { "dependencies": { "cheerio": "^1.2.0", "css-tree": "^3.1.0" }, "peerDependencies": { "@maizzle/framework": ">=5.0.0 <7.0.0", "@react-email/components": ">=0.0.36", "@react-email/render": ">=1.0.0", "isolated-vm": ">=5.0.0", "mjml": ">=4.0.0", "react": "^18.0.0 || ^19.0.0", "sucrase": "^3.35.0" }, "optionalPeers": ["@maizzle/framework", "@react-email/components", "@react-email/render", "isolated-vm", "mjml", "react", "sucrase"] }, "sha512-kZo4FpfGsWcDbPeffHuS/V1miiXlkLnwpLLVukjOsnPW6HIGTAhHyNcOswYsQsntZbSlcXFJ6zEhf7XzhT0x3A=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.7", "", { "os": "aix", "cpu": "ppc64" }, "sha512-EKX3Qwmhz1eMdEJokhALr0YiD0lhQNwDqkPYyPhiSwKrh7/4KRjQc04sZ8db+5DVVnZ1LmbNDI1uAMPEUBnQPg=="],
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.10 - 2026-11-03
+
+### Changed
+
+- **Engine 0.18.12**: Proton Mail collapses `&nbsp;`-only spacers, as the real client
+  draws them; Yahoo Mail web drops `radial-gradient` so the element shows its
+  `background-color`; untouched inline styles are no longer re-serialised.
+
 ## 0.13.9 - 2026-11-03
 
 ### Changed
