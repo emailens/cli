@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.9 - 2026-11-03
+
+### Changed
+
+- **Engine 0.18.11**: the Outlook for Mac simulation loads no web fonts (a font
+  `<link>`, `@import` or `@font-face`), as the real app does, so headlines wrap where
+  they do in the inbox instead of in the web font.
+
 ## 0.13.8 - 2026-11-03
 
 ### Changed
