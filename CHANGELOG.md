@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.12 - 2026-11-04
+
+### Changed
+
+- **Engine 0.18.14**: Outlook Classic reads version conditions, so a block in
+  `[if lt mso 16]` (Outlook 2013 and older) is no longer drawn next to its
+  `[if gte mso 16]` counterpart.
+
 ## 0.13.11 - 2026-11-04
 
 ### Changed
