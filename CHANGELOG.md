@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.14 - 2026-11-05
+
+### Changed
+
+- **Engine 0.18.16**: more Outlook Classic layout measured against Word. Line
+  heights follow the text when no px `line-height` is set, links keep their
+  block's line, a block's last `<br>` and a link's empty lines behave as in
+  Outlook, nested lists sit tight, and Arial Black headings get their real
+  spacing.
+
 ## 0.13.13 - 2026-11-05
 
 ### Changed
