@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.13 - 2026-11-05
+
+### Changed
+
+- **Engine 0.18.15**: Outlook Classic's layout and dark mode measured against
+  Word. Table margins, row padding, cell widths, line spacing, Gill Sans MT,
+  Office's cloud fonts and `width:auto` VML buttons now come out as Outlook
+  draws them, and dark mode uses Outlook Classic's measured colours.
+
 ## 0.13.12 - 2026-11-04
 
 ### Changed
