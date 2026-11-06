@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.17 - 2026-11-06
+
+### Changed
+
+- **Engine 0.18.19**: Outlook Classic drops a gradient or image set with
+  `background-image` in a `<style>` block too, so a gradient button no longer
+  gets a coloured box there (real Word paints none).
+
 ## 0.13.16 - 2026-11-06
 
 ### Changed
