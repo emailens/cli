@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.16 - 2026-11-06
+
+### Changed
+
+- **Engine 0.18.18**: a gradient button no longer gets a made-up solid fill in
+  Outlook Classic (real Word paints none), and Yahoo Mail web ignores
+  `box-sizing`, so a full-width padded button overflows there as it really does.
+
 ## 0.13.15 - 2026-11-06
 
 ### Changed
