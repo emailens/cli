@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.15 - 2026-11-06
+
+### Changed
+
+- **Engine 0.18.17**: fewer false overflow warnings. An image in a
+  zero-width (hidden) container is no longer flagged, and a long unbroken
+  string is reported as a note rather than a horizontal-scroll warning.
+
 ## 0.13.14 - 2026-11-05
 
 ### Changed
