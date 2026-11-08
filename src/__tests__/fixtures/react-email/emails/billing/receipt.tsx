@@ -1,4 +1,4 @@
-import { Body, Container, Head, Html, Section, Text } from "@react-email/components";
+import { Body, Container, Head, Html, Section, Text } from "react-email";
 
 export default function Receipt() {
   return (

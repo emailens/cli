@@ -34,7 +34,7 @@ describe("lint on a React Email folder", () => {
   test("renders every template in subfolders, and skips the components", async () => {
     const r = await cli(["lint", EMAILS, "--json"]);
     expect(r.stderr).toBe("");
-    expect(names(JSON.parse(r.stdout))).toEqual(["billing/receipt.tsx", "welcome.tsx"]);
+    expect(names(JSON.parse(r.stdout))).toEqual(["billing/plan.tsx", "billing/receipt.tsx", "welcome.tsx"]);
   });
 
   test("renders with PreviewProps and resolves local imports", async () => {
@@ -48,6 +48,13 @@ describe("lint on a React Email folder", () => {
     const r = await cli(["lint", join(EMAILS, "billing", "receipt.tsx"), "--json"]);
     const issues = (JSON.parse(r.stdout) as Json).files[0].issues;
     expect(issues.some((i) => /flex|display|gap/i.test(`${i.rule} ${i.message}`))).toBe(true);
+  });
+
+  test("Tailwind classes are checked after React Email inlines them", async () => {
+    const r = await cli(["lint", join(EMAILS, "billing", "plan.tsx"), "--json"]);
+    const rules = (JSON.parse(r.stdout) as Json).files[0].issues.map((i) => i.rule);
+    expect(rules).toContain("display:flex");
+    expect(rules).toContain("gap");
   });
 
   test("a template that throws names the file and fails the run", async () => {
@@ -69,7 +76,7 @@ describe("emailens react-email", () => {
   test("finds the emails folder on its own", async () => {
     const r = await cli(["react-email", "--json"], PROJECT);
     expect(r.stderr).toBe("");
-    expect(names(JSON.parse(r.stdout))).toEqual(["billing/receipt.tsx", "welcome.tsx"]);
+    expect(names(JSON.parse(r.stdout))).toEqual(["billing/plan.tsx", "billing/receipt.tsx", "welcome.tsx"]);
   });
 
   test("says where it looked when there is no emails folder", async () => {
@@ -87,7 +94,7 @@ describe("React Email's /static images", () => {
     mkdirSync(STATIC, { recursive: true });
     writeFileSync(
       join(STATIC, "logo.tsx"),
-      `import { Html, Img } from "@react-email/components";
+      `import { Html, Img } from "react-email";
 export default function Logo() { return <Html><Img src="/static/logo.png" alt="Acme" width="80" height="20" /></Html>; }
 `,
     );
@@ -106,7 +113,7 @@ describe("transactional email", () => {
     mkdirSync(TX, { recursive: true });
     writeFileSync(
       join(TX, "login.tsx"),
-      `import { Html, Text } from "@react-email/components";
+      `import { Html, Text } from "react-email";
 export default function Login() { return <Html><Text>Log in with this link.</Text></Html>; }
 `,
     );

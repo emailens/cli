@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { canRenderNatively, findEmailsDir, findTemplates, renderTemplate, TemplateError } from "../react-email.js";
+import { canRenderNatively, findEmailsDir, findTemplates, renderModule, renderTemplate, TemplateError } from "../react-email.js";
 
 /** The renderer in process, where coverage can see it; react-email.test.ts drives the binary. */
 
@@ -13,7 +13,7 @@ afterAll(() => rmSync(SCRATCH, { recursive: true, force: true }));
 describe("findTemplates", () => {
   test("walks subfolders and skips _ and static folders", () => {
     const rel = findTemplates(EMAILS).map((f) => f.slice(EMAILS.length + 1).split("\\").join("/"));
-    expect(rel).toEqual(["billing/receipt.tsx", "welcome.tsx"]);
+    expect(rel).toEqual(["billing/plan.tsx", "billing/receipt.tsx", "welcome.tsx"]);
   });
 });
 
@@ -32,6 +32,13 @@ describe("findEmailsDir", () => {
 describe("renderTemplate", () => {
   test("renders with PreviewProps", async () => {
     expect(await renderTemplate(join(EMAILS, "welcome.tsx"))).toContain("ADA");
+  });
+  test("React Email 6 renders through react-email itself", () => {
+    expect(renderModule(join(EMAILS, "welcome.tsx"))).toBe("react-email");
+  });
+  test("a React Email 5 template, components from @react-email/components, still renders", async () => {
+    const legacy = join(import.meta.dir, "fixtures", "react-email-5", "emails", "legacy.tsx");
+    expect(await renderTemplate(legacy)).toContain("Still renders");
   });
   test("a file without a default component is not an email", async () => {
     expect(await renderTemplate(join(EMAILS, "_components", "footer.tsx"))).toBeNull();

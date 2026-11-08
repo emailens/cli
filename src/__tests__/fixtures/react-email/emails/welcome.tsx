@@ -1,4 +1,4 @@
-import { Body, Container, Head, Html, Text } from "@react-email/components";
+import { Body, Container, Head, Html, Text } from "react-email";
 import { Footer } from "./_components/footer";
 
 interface Props {

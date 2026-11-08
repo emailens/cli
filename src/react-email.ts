@@ -58,9 +58,17 @@ function projectEsbuild(file: string): Esbuild | null {
   return null;
 }
 
-/** Which package exports `render` in this project. */
-function renderModule(file: string): string | null {
+/**
+ * Which package exports `render` in this project. React Email 6 exports it
+ * from react-email itself, which under pnpm is the only one in reach; before
+ * 6, react-email was the CLI alone and render came from @react-email/*.
+ */
+export function renderModule(file: string): string | null {
   const req = createRequire(file);
+  try {
+    const { version } = req("react-email/package.json") as { version: string };
+    if (Number.parseInt(version, 10) >= 6) return "react-email";
+  } catch {}
   for (const m of ["@react-email/render", "@react-email/components"]) {
     try {
       req.resolve(m);
