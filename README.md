@@ -56,6 +56,23 @@ network: the analysis runs locally.
 Exit codes: `0` clean, `1` errors, `2` warnings with `--fail-on-warning`, or
 more than `--max-warnings`.
 
+### In a React Email project
+
+```bash
+npx @emailens/cli react-email
+```
+
+Finds the emails folder `email dev` uses (`emails/`, `src/emails/`), renders
+every template with your project's own React Email, `PreviewProps` included,
+and checks the HTML. Local imports, any npm package and tsconfig paths work,
+subfolders are included, and `_components`-style folders and files without a
+default export are skipped. No export step. `--watch` re-checks on save.
+
+Pass `--email-type transactional` (or set `"emailType": "transactional"` in
+`.emailensrc`) when the folder holds sign-in, receipt and alert emails, which
+need no unsubscribe link. `emailens lint emails/` does the same as the command
+above on a folder you name.
+
 ## Why not caniemail, or React Email's own checker?
 
 [Can I email](https://www.caniemail.com) is the support table: one feature,
@@ -91,6 +108,8 @@ client-targeting hacks.
 | `--quiet` | `-q` | No line about the hosted preview after a failure |
 | `--skip` | | Comma-separated checks to skip: `spam,links,accessibility,images,compatibility,inboxPreview,size,templateVariables,overflow,visual,darkContrast,mobileContrast,design,vml,styleSurvival,targeting` |
 | `--targeting-policy` | | `progressive` (default), `strict`, or `lenient` |
+| `--email-type` | | `transactional` drops the unsubscribe requirement; `marketing` keeps it. Default: `emailType` in `.emailensrc` |
+| `--gate` | | Also send each email to the hosted pre-send gate, which fails on a regression against the last version of that file that passed. Pro plan, needs `EMAILENS_API_KEY` |
 
 A `.emailensrc` in the project, the file the VS Code extension reads, can set
 rule severities and skips; `--skip` on the command line wins.

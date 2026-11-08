@@ -10,7 +10,9 @@ import {
   type SourceLocation,
 } from "@emailens/engine";
 import { applySeverities, loadProjectConfig } from "../project-config.js";
-import { readdir } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
+import { canRenderNatively, findTemplates, renderTemplate, TemplateError } from "../react-email.js";
+import { gateEmail, type GateOutcome } from "../gate.js";
 import { resolve, relative } from "node:path";
 
 export interface LintIssue {
@@ -81,6 +83,15 @@ export default defineCommand({
       type: "string",
       description: "Also print findings as GitHub Actions annotations, on the lines of the pull request: github",
     },
+    "email-type": {
+      type: "string",
+      description: "transactional: sign-in, receipts and alerts need no unsubscribe link (default: emailType in .emailensrc)",
+    },
+    gate: {
+      type: "boolean",
+      description: "Also run each email through the pre-send gate (Pro): fails on a regression against the last version that passed. Needs EMAILENS_API_KEY",
+    },
+    "api-key": { type: "string", description: "API key for --gate (default: EMAILENS_API_KEY)" },
     quiet: {
       type: "boolean",
       alias: "q",
@@ -148,13 +159,41 @@ export default defineCommand({
       }
 
       const results: LintFileResult[] = [];
+      let renderFailures = 0;
       let totalErrors = 0;
       let totalWarnings = 0;
+
+      const gateKey = args.gate ? ((args["api-key"] as string | undefined) ?? process.env.EMAILENS_API_KEY) : undefined;
+      if (args.gate && !gateKey) {
+        throw new Error("--gate needs an API key on the Pro plan: set EMAILENS_API_KEY (or pass --api-key). Keys are at app.emailens.dev/dashboard/api.");
+      }
+      const gates: GateOutcome[] = [];
+      const emailTypeArg = args["email-type"] as string | undefined;
+      if (emailTypeArg !== undefined && emailTypeArg !== "marketing" && emailTypeArg !== "transactional") {
+        throw new Error(`--email-type must be marketing or transactional, got: ${emailTypeArg}`);
+      }
+      const emailType = (emailTypeArg as "marketing" | "transactional" | undefined) ?? project?.emailType;
 
       for (const file of files) {
         const source = await readInput(file);
         const format = resolveFormat(args.format, file, source);
-        const html = await compile(source, format);
+        // A React Email project renders its own templates: local imports,
+        // any package and PreviewProps work. Without esbuild and
+        // @react-email/render in reach, the engine's sandboxed compile runs.
+        let html: string | null;
+        if (format === "jsx" && !args.format && file !== "-" && canRenderNatively(file)) {
+          try {
+            html = await renderTemplate(file);
+          } catch (err) {
+            if (!(err instanceof TemplateError)) throw err;
+            console.error(`${pc.red("error")}  ${relative(process.cwd(), err.file)}: ${err.reason}`);
+            renderFailures++;
+            continue;
+          }
+          if (html === null) continue; // a shared component, not an email
+        } else {
+          html = await compile(source, format);
+        }
         const framework = toFramework(format);
 
         // Positions describe the HTML that was analyzed. For jsx/mjml/maizzle
@@ -165,6 +204,7 @@ export default defineCommand({
 
         const targetingPolicy = parseTargetingPolicy(args.targetingPolicy);
         const report = auditEmail(html, {
+          spam: emailType ? { emailType } : undefined,
           framework,
           skip: skip as AuditSkipType[],
           positions,
@@ -178,7 +218,11 @@ export default defineCommand({
         results.push({ file: relative(process.cwd(), file), issues, errors, warnings });
         totalErrors += errors;
         totalWarnings += warnings;
+
+        if (gateKey) gates.push(await gateEmail(html, relative(process.cwd(), file).split("\\").join("/"), gateKey));
       }
+      totalErrors += renderFailures;
+      const gateFailures = gates.filter((g) => !g.passed).length;
 
       if (args.reporter === "github") {
         for (const line of githubAnnotations(results, { info: args.info })) console.log(line);
@@ -187,7 +231,7 @@ export default defineCommand({
       // Output
       if (args.json) {
         // Compact: the usual reader is a program or an agent paying per token.
-        console.log(JSON.stringify({ files: results, totalErrors, totalWarnings }));
+        console.log(JSON.stringify({ files: results, totalErrors, totalWarnings, ...(gateKey ? { gate: gates } : {}) }));
       } else {
         for (const result of results) {
           console.log(pc.underline(result.file));
@@ -224,19 +268,25 @@ export default defineCommand({
         }
 
         const summary = [
-          `${files.length} file${files.length === 1 ? "" : "s"}`,
+          `${results.length} file${results.length === 1 ? "" : "s"}`,
           totalErrors > 0 ? pc.red(`${totalErrors} error${totalErrors === 1 ? "" : "s"}`) : null,
           totalWarnings > 0 ? pc.yellow(`${totalWarnings} warning${totalWarnings === 1 ? "" : "s"}`) : null,
           totalErrors === 0 && totalWarnings === 0 ? pc.green("all clean") : null,
+          gateKey ? (gateFailures > 0 ? pc.red(`gate failed on ${gateFailures}`) : pc.green(`gate passed on ${gates.length}`)) : null,
         ].filter(Boolean).join(" | ");
 
+        for (const g of gates) if (!g.passed) console.log(`${pc.red("gate")}  ${g.ref}  ${g.summary}`);
         console.log(summary);
+        if (results.some((r) => r.issues.some((i) => i.message.includes("(/static/")))) console.log(pc.dim(STATIC_HINT));
+        if (!emailType && results.some((r) => r.issues.some((i) => i.rule === "missing-unsubscribe" && i.severity !== "info"))) {
+          console.log(pc.dim(TRANSACTIONAL_HINT));
+        }
       }
 
       // The exit code, decided once so the human output can follow it.
       let exitCode = 0;
       let reason: string | null = null;
-      if (totalErrors > 0) {
+      if (totalErrors > 0 || gateFailures > 0) {
         exitCode = 1;
       } else if (args.failOnWarning && totalWarnings > 0) {
         exitCode = 2;
@@ -272,6 +322,22 @@ export default defineCommand({
  */
 export const HOSTED_HINT =
   "See it rendered in Gmail, Outlook and Apple Mail, no signup: https://app.emailens.dev/try?utm_source=cli&utm_medium=lint";
+
+/**
+ * React Email's preview server serves emails/static at /static, so the starter
+ * templates fall back to that path when no base URL is set. It works in
+ * `email dev` and nowhere else: the finding is right, the hint says why.
+ */
+export const STATIC_HINT =
+  "/static/ images load only in React Email's preview server. Set the base URL your templates use for images to a public address before you send.";
+
+/**
+ * The unsubscribe rule guesses transactional from a short phrase list and
+ * misses most of a product's own mail (sign-in links, MFA, alerts). The
+ * engine takes the answer when told; the hint says how to tell it.
+ */
+export const TRANSACTIONAL_HINT =
+  'Sign-in, receipt and alert emails need no unsubscribe link: pass --email-type transactional, or set "emailType": "transactional" in .emailensrc.';
 
 export function failureHint(exitCode: number, options: { quiet?: boolean } = {}): string | null {
   if (exitCode === 0 || options.quiet) return null;
@@ -318,7 +384,10 @@ type AuditSkipType = "spam" | "links" | "accessibility" | "images" | "compatibil
 async function resolveGlob(pattern: string): Promise<string[]> {
   // If it's a direct file, just return it
   if (!pattern.includes("*")) {
-    return [resolve(pattern)];
+    const path = resolve(pattern);
+    // A folder is a React Email project's emails folder, subfolders included.
+    const isDir = await stat(path).then((s) => s.isDirectory(), () => false);
+    return isDir ? findTemplates(path) : [path];
   }
 
   // Recursive glob is not supported: provide clear error

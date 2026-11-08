@@ -9,6 +9,7 @@ import fix from "./commands/fix.js";
 import audit from "./commands/audit.js";
 import lint from "./commands/lint.js";
 import inbox from "./commands/inbox.js";
+import reactEmail from "./commands/react-email.js";
 
 const main = defineCommand({
   meta,
@@ -21,6 +22,7 @@ const main = defineCommand({
     audit,
     lint,
     inbox,
+    "react-email": reactEmail,
   },
 });
 

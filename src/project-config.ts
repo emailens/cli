@@ -24,6 +24,8 @@ const SEVERITIES: readonly string[] = ["error", "warning", "info", "off"];
 export interface ProjectConfig {
   skip?: string[];
   rules?: RuleSeverities;
+  /** "transactional": sign-in, receipts, alerts, which need no unsubscribe link. */
+  emailType?: "marketing" | "transactional";
   /** Where it was read from, for error messages. */
   source?: string;
   /** Entries that were not usable, named rather than dropped in silence. */
@@ -76,7 +78,11 @@ export function parseProjectConfig(
   if (Object.keys(rules).length) config.rules = rules;
   config.invalid = invalid;
 
-  return config.skip || config.rules || invalid.length ? config : undefined;
+  const emailType = (body as Record<string, unknown>).emailType;
+  if (emailType === "marketing" || emailType === "transactional") config.emailType = emailType;
+  else if (emailType !== undefined) config.invalid.push(`emailType: ${JSON.stringify(emailType)}`);
+
+  return config.skip || config.rules || config.emailType || config.invalid.length ? config : undefined;
 }
 
 /**
