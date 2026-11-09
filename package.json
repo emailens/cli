@@ -42,6 +42,7 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
     "@emailens/engine": "^0.18.21",
+    "@react-email/components": "1.0.12",
     "@types/bun": "^1.4.0",
     "@types/mjml": "^4.7.4",
     "@types/node": "^25.9.5",
