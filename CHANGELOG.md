@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.13.18 - 2026-11-09
+
+### Added
+
+- **`emailens react-email [dir]`** lints a React Email project with nothing to
+  set up: it finds `emails/` or `src/emails/` and renders each template with
+  the project's own esbuild, React and React Email, using its `PreviewProps`.
+  Local imports, npm packages and tsconfig paths work. `lint <folder>` does
+  the same on a named folder. `--watch` re-checks on save, `--gate` checks
+  each email against the last version that passed (Pro), and `--email-type`
+  (or `emailType` in `.emailensrc`) marks transactional mail.
+- React Email 6 support: templates that import from `react-email` render
+  through it.
+
+### Changed
+
+- **Engine 0.18.21**: React Email 6 imports compile in the sandbox; zero
+  padding no longer warns in Outlook Classic; `visibility` and `text-shadow`
+  are unsupported in Yahoo Mail (web and Android), and `visibility` in
+  Outlook Android, from our own real-client captures.
+
 ## 0.13.17 - 2026-11-06
 
 ### Changed
