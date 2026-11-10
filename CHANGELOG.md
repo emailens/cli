@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.19 - 2026-11-11
+
+### Changed
+
+- **Engine 0.18.22**: Yahoo Mail web keeps `background-size` written on its
+  own (only the size inside the `background` shorthand is ignored), so
+  pictures sized `cover` no longer draw zoomed and cropped. The new Outlook
+  for Windows reads `@media` width queries at its window width and loads no
+  web fonts. Gmail's `<style>` inlining follows CSS specificity, and Gmail web
+  links take Gmail's own colour where real Gmail does.
+
 ## 0.13.18 - 2026-11-09
 
 ### Added
