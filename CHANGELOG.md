@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`emailens design <file>`** says, per client, whether the email still looks
+  like its design in our live preview: Ready, Needs work or Broken, with the
+  reasons (columns that stack, a button that moved, a fill that went missing).
+  It is the verdict the Emailens email page shows. It draws both pages in a
+  browser: Browserless when `BROWSERLESS_URL` is set, otherwise a local
+  Chromium through the optional `playwright-core`. It exits 1 on Broken, or on
+  Needs work with `--strict`. Needs the engine's `design` subpath, so it ships
+  with the next engine release.
+
 ## 0.13.19 - 2026-11-11
 
 ### Changed

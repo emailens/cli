@@ -117,6 +117,69 @@ rule severities and skips; `--skip` on the command line wins.
 Maizzle HTML needs `@maizzle/framework@5` installed beside the CLI. A `.vue`
 file needs `@maizzle/framework@6`. One install is one major.
 
+### `emailens design`: does it still look like your design?
+
+`lint` reads the code. `design` reads the render: it draws the email as each
+client's live preview shows it and as you designed it, then compares the two
+layouts element by element. Every element is compared on its position, size,
+colours, corners, fonts and spacing. It gives the verdict the Emailens email
+page shows: **Ready**, **Needs work** or **Broken**, with the reasons.
+
+```text
+$ emailens design emails/welcome.html --clients outlook-windows-legacy,gmail-web
+✗ Outlook Classic            Broken
+    Outlook Classic breaks your design.
+    - Columns that sit side by side in your design stack on top of each other.
+    - The email is drawn at a very different width from your design (54% of it).
+    - “Track your parcel” is moved (centre at 25% → 50% across the email) and 1107px wide instead of 300px.
+    - “Manage your order” is moved (centre at 75% → 50% across the email) and 1107px wide instead of 300px.
+    - Layout differs in 4 places. For example, “Hello, your order has shipped.” has width 600px instead of 552px.
+    and 1 more
+~ Gmail                      Needs work
+    Gmail keeps your layout but changes how it looks.
+    - Text style differs in 5 places. For example, “Hello, your order has shipped.” has line height 24px instead of normal.
+    - Borders differ: “Manage your order” has border top color rgb(34, 34, 34) instead of rgb(0, 0, 0).
+    - Colours differ: “Manage your order” has color rgb(34, 34, 34) instead of rgb(0, 0, 0).
+```
+
+That email puts two buttons side by side with `display:flex`. Classic Outlook
+has no flexbox, so the buttons stack at full width. Gmail keeps the layout but
+sets its own line height and text colour.
+
+Layout needs a browser, so this command needs one too:
+
+```bash
+npm install -g @emailens/cli playwright-core
+npx playwright-core install chromium   # a local Chromium, or:
+export BROWSERLESS_URL=wss://...        # your Browserless instance
+emailens design email.html
+```
+
+Or without installing: `npx -p @emailens/cli -p playwright-core emailens design email.html`.
+
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--clients` | `-c` | Comma-separated client IDs. Default: all 21 |
+| `--format` | `-f` | Input format: `html`, `jsx`, `mjml`, `maizzle` |
+| `--strict` | | Fail on Needs work too, not only on Broken |
+| `--json` | | Output as JSON |
+| `--quiet` | `-q` | No spinner |
+
+Exit codes: `0` when no client breaks the design, `1` when one does (or, with
+`--strict`, when one changes it).
+
+**What it covers and what it doesn't:**
+- It runs in light mode, against our live preview of each client. It doesn't
+  screenshot real inboxes: real-device screenshots are on the hosted plans.
+- It compares page structure only: the same verdict as the email page in
+  your browser. The hosted check on saved emails also compares screenshots
+  pixel by pixel, which agrees more often with a human reviewer.
+- Scripts are off in both pages. The email's own images and fonts load from
+  their addresses.
+- The font stand-ins the previews use (Segoe, Aptos, the Apple and Android
+  system fonts) are downloaded once from app.emailens.dev into
+  `~/.cache/emailens/fonts`.
+
 ### Other commands
 
 ```bash
@@ -125,6 +188,7 @@ emailens analyze email.html --clients gmail-web,outlook-windows --json
 emailens audit email.html                      # compatibility plus every other check
 emailens preview email.html --dark-mode        # transforms, analysis, dark mode simulation
 emailens preview email.html --screenshots --out ./shots  # needs BROWSERLESS_URL and playwright-core
+emailens design email.html --clients gmail-web # still looks like the design? needs playwright-core
 emailens export email.html -o ./report         # self-contained HTML report (--json for JSON)
 emailens fix email.html -o fixed.html          # AI fix, needs ANTHROPIC_API_KEY (--estimate: tokens only)
 emailens clients                               # the 21 clients
