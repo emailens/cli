@@ -135,27 +135,25 @@ $ emailens design emails/welcome.html --clients outlook-windows-legacy,gmail-web
     - “Manage your order” is moved (centre at 75% → 50% across the email) and 1107px wide instead of 300px.
     - Layout differs in 4 places. For example, “Hello, your order has shipped.” has width 600px instead of 552px.
     and 1 more
-~ Gmail                      Needs work
-    Gmail keeps your layout but changes how it looks.
-    - Text style differs in 5 places. For example, “Hello, your order has shipped.” has line height 24px instead of normal.
-    - Borders differ: “Manage your order” has border top color rgb(34, 34, 34) instead of rgb(0, 0, 0).
-    - Colours differ: “Manage your order” has color rgb(34, 34, 34) instead of rgb(0, 0, 0).
+✓ Gmail                      Ready
 ```
 
 That email puts two buttons side by side with `display:flex`. Classic Outlook
-has no flexbox, so the buttons stack at full width. Gmail keeps the layout but
-sets its own line height and text colour.
+has no flexbox, so the buttons stack at full width. Gmail sets its own line
+height and text colour, but the screenshots of the two pages differ by under
+2.5% of their pixels, so the design reads as kept.
 
-Layout needs a browser, so this command needs one too:
+Layout needs a browser, so this command needs one too. `sharp` adds the pixel
+comparison:
 
 ```bash
-npm install -g @emailens/cli playwright-core
+npm install -g @emailens/cli playwright-core sharp
 npx playwright-core install chromium   # a local Chromium, or:
 export BROWSERLESS_URL=wss://...        # your Browserless instance
 emailens design email.html
 ```
 
-Or without installing: `npx -p @emailens/cli -p playwright-core emailens design email.html`.
+Or without installing: `npx -p @emailens/cli -p playwright-core -p sharp emailens design email.html`.
 
 | Flag | Alias | Description |
 |------|-------|-------------|
@@ -171,9 +169,13 @@ Exit codes: `0` when no client breaks the design, `1` when one does (or, with
 **What it covers and what it doesn't:**
 - It runs in light mode, against our live preview of each client. It doesn't
   screenshot real inboxes: real-device screenshots are on the hosted plans.
-- It compares page structure only: the same verdict as the email page in
-  your browser. The hosted check on saved emails also compares screenshots
-  pixel by pixel, which agrees more often with a human reviewer.
+- With `sharp` installed, it also screenshots both pages and compares them
+  pixel by pixel, as the hosted check on saved emails does. That agrees more
+  often with a human reviewer. Without `sharp`, it compares page structure
+  only, as the email page in your browser does, and the JSON has no `diff`.
+- On Browserless, the session has to stay open for the whole run. A short
+  session timeout closes the browser midway: raise its `TIMEOUT`, or pass
+  fewer `--clients`.
 - Scripts are off in both pages. The email's own images and fonts load from
   their addresses.
 - The font stand-ins the previews use (Segoe, Aptos, the Apple and Android
@@ -188,7 +190,7 @@ emailens analyze email.html --clients gmail-web,outlook-windows --json
 emailens audit email.html                      # compatibility plus every other check
 emailens preview email.html --dark-mode        # transforms, analysis, dark mode simulation
 emailens preview email.html --screenshots --out ./shots  # needs BROWSERLESS_URL and playwright-core
-emailens design email.html --clients gmail-web # still looks like the design? needs playwright-core
+emailens design email.html --clients gmail-web # still looks like the design? needs playwright-core (+ sharp)
 emailens export email.html -o ./report         # self-contained HTML report (--json for JSON)
 emailens fix email.html -o fixed.html          # AI fix, needs ANTHROPIC_API_KEY (--estimate: tokens only)
 emailens clients                               # the 21 clients

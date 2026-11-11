@@ -10,8 +10,10 @@
   It is the verdict the Emailens email page shows. It draws both pages in a
   browser: Browserless when `BROWSERLESS_URL` is set, otherwise a local
   Chromium through the optional `playwright-core`. It exits 1 on Broken, or on
-  Needs work with `--strict`. Needs the engine's `design` subpath, so it ships
-  with the next engine release.
+  Needs work with `--strict`. With the optional `sharp` installed it also
+  compares screenshots of the two pages pixel by pixel, as the hosted check
+  does. Needs the engine's `design` subpath, so it ships with the next engine
+  release.
 
 ## 0.13.19 - 2026-11-11
 
