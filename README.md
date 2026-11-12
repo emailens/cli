@@ -178,9 +178,12 @@ Exit codes: `0` when no client breaks the design, `1` when one does (or, with
   fewer `--clients`.
 - Scripts are off in both pages. The email's own images and fonts load from
   their addresses.
-- The font stand-ins the previews use (Segoe, Aptos, the Apple and Android
-  system fonts) are downloaded once from app.emailens.dev into
-  `~/.cache/emailens/fonts`.
+- Both pages draw with the same font stand-ins (Arimo for Arial and
+  Helvetica, and faces for Segoe, Aptos and the Apple and Android system
+  fonts), so the verdict is the same on a Mac, on Windows and on a bare Linux
+  runner. They are downloaded once from app.emailens.dev into
+  `~/.cache/emailens/fonts`. If that fails, the command says so on stderr:
+  text then draws in this machine's fonts and can read as a change.
 
 ### Other commands
 
@@ -247,6 +250,15 @@ Options: `failOnWarning`, `skip` (the `--skip` names), `framework`.
 
 `--reporter github` puts each finding on its line in the pull request's
 changed files.
+
+To fail the build when a client breaks the design, add `design`. It needs a
+Chromium on the runner:
+
+```yaml
+- run: npm install -g @emailens/cli playwright-core sharp
+- run: npx playwright-core install --with-deps chromium
+- run: emailens design emails/welcome.html --clients outlook-windows-legacy,gmail-web,apple-mail-macos
+```
 
 `**` globs are not supported: use a single-level wildcard or list the files.
 For scores per client in a pull request comment, use the
