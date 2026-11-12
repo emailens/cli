@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.14.1 - 2026-11-12
+
+### Fixed
+
+- **Engine 0.19.1**: `emailens design` no longer reads this machine's fonts
+  as a change. On Linux, where the GitHub Action runs, an email the client
+  keeps could come back "Needs work". The design page now draws with the
+  same stand-in fonts as the live preview. When those fonts cannot be
+  fetched, the command now says so on stderr instead of falling back
+  silently.
+
 ## 0.14.0 - 2026-11-12
 
 ### Added
