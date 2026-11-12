@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.14.0 - 2026-11-12
 
 ### Added
 
@@ -12,8 +12,13 @@
   Chromium through the optional `playwright-core`. It exits 1 on Broken, or on
   Needs work with `--strict`. With the optional `sharp` installed it also
   compares screenshots of the two pages pixel by pixel, as the hosted check
-  does. Needs the engine's `design` subpath, so it ships with the next engine
-  release.
+  does.
+
+### Changed
+
+- **Engine 0.19.0**: the design check runner and its pixel line, and
+  `measureGap` fitting at full size, so identical shots no longer read as
+  different.
 
 ## 0.13.19 - 2026-11-11
 
