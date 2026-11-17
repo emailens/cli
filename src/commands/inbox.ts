@@ -30,6 +30,7 @@ interface WaitResponse {
     };
   };
   verdict?: { pass: boolean; reasons: string[]; checked: string; sinceLast: string };
+  ambiguous?: boolean;
   error?: string;
 }
 
@@ -53,6 +54,8 @@ export interface WaitOptions {
   /** Overall seconds; each request waits at most 60 on the server. */
   timeout: number;
   failOn: FailOn;
+  testId?: string;
+  runId?: string;
 }
 
 export interface WaitResult {
@@ -76,6 +79,8 @@ export async function waitForEmail(
     if (o.subject) q.set("subject", o.subject);
     if (o.sender) q.set("sender", o.sender);
     if (o.inbox) q.set("inboxId", o.inbox);
+    if (o.testId) q.set("testId", o.testId);
+    if (o.runId) q.set("runId", o.runId);
     let res: Response;
     try {
       res = await fetchImpl(`${API_URL()}/api/sandbox/v1/messages/wait?${q}`, {
@@ -88,17 +93,78 @@ export async function waitForEmail(
     const body = (await res.json().catch(() => ({}))) as WaitResponse;
     if (res.status === 401)
       return { code: 2, error: "Invalid or revoked API key (EMAILENS_API_KEY).", failures: [] };
-    if (!res.ok) return { code: 2, error: body.error ?? `Emailens answered ${res.status}.`, failures: [] };
+    if (!res.ok) {
+      if (body.ambiguous && o.testId && o.runId)
+        return { code: 1, response: body, error: body.error, failures: [body.error ?? "More than one matching email arrived."] };
+      return { code: 2, error: body.error ?? `Emailens answered ${res.status}.`, failures: [] };
+    }
     const a = body.message?.analysis ?? {};
     const bad = (rows?: Row[]) => (rows ?? []).filter((r) => !r.ok).map((r) => r.text);
-    const failures = [
+    const failures = o.testId && body.verdict
+      ? body.verdict.reasons
+      : [
       ...(o.failOn === "all" || o.failOn === "check" ? bad(a.match?.rows) : []),
       ...(o.failOn === "all" || o.failOn === "drift" ? bad(a.drift?.rows) : []),
-    ];
-    return { code: failures.length ? 1 : 0, response: body, failures };
+      ];
+    return { code: o.testId && body.verdict ? (body.verdict.pass ? 0 : 1) : failures.length ? 1 : 0, response: body, failures };
   }
-  return { code: 2, error: `No matching email arrived within ${o.timeout}s.`, failures: [] };
+  const error = `No matching email arrived within ${o.timeout}s.`;
+  if (o.testId && o.runId) {
+    try {
+      await fetchImpl(`${API_URL()}/api/email-tests/${encodeURIComponent(o.testId)}/runs/${encodeURIComponent(o.runId)}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${o.apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "timed_out", reasons: [error] }),
+      });
+    } catch { /* Keep timeout verdict even if history update is unreachable. */ }
+  }
+  return { code: 2, error, failures: [] };
 }
+
+const begin = defineCommand({
+  meta: { name: "begin", description: "Start a saved email test run before your app sends the staging email" },
+  args: {
+    testId: { type: "positional", required: true, description: "Saved email test ID" },
+    "api-key": { type: "string", description: "API key (default: EMAILENS_API_KEY)" },
+    json: { type: "boolean", description: "Output run metadata as JSON" },
+  },
+  async run({ args }) {
+    const apiKey = (args["api-key"] as string | undefined) ?? process.env.EMAILENS_API_KEY;
+    const testId = args.testId as string | undefined;
+    if (!apiKey || !testId) {
+      console.error(pc.red("  Usage: emailens inbox begin <test-id> (set EMAILENS_API_KEY)."));
+      process.exitCode = 2;
+      return;
+    }
+    const metadata = {
+      source: process.env.GITHUB_ACTIONS ? "github-action" : "cli",
+      commitSha: process.env.GITHUB_SHA ?? process.env.GIT_COMMIT,
+      branch: process.env.GITHUB_REF_NAME ?? process.env.GIT_BRANCH,
+      environment: process.env.GITHUB_ENVIRONMENT ?? process.env.DEPLOY_ENVIRONMENT,
+    };
+    let response: Response;
+    try {
+      response = await fetch(`${API_URL()}/api/email-tests/${encodeURIComponent(testId)}/runs`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(metadata),
+      });
+    } catch (e) {
+      console.error(pc.red(`  Could not reach Emailens: ${(e as Error).message}`));
+      process.exitCode = 2;
+      return;
+    }
+    const body = await response.json().catch(() => ({})) as { run?: { id: string; startedAt: string }; error?: string };
+    if (!response.ok || !body.run) {
+      console.error(pc.red(`  ${body.error ?? `Emailens answered ${response.status}.`}`));
+      process.exitCode = response.status === 401 ? 2 : 1;
+      return;
+    }
+    const result = { testId, runId: body.run.id, startedAt: body.run.startedAt };
+    if (args.json) console.log(JSON.stringify(result));
+    else console.log(`  Started email test run ${result.runId}`);
+  },
+});
 
 const wait = defineCommand({
   meta: {
@@ -121,6 +187,8 @@ const wait = defineCommand({
       default: "all",
     },
     "api-key": { type: "string", description: "API key (default: EMAILENS_API_KEY)" },
+    test: { type: "string", description: "Saved test ID; pair with --run-id" },
+    "run-id": { type: "string", description: "Run ID returned by inbox begin" },
     json: { type: "boolean", description: "Output as JSON" },
   },
   async run({ args }) {
@@ -128,6 +196,10 @@ const wait = defineCommand({
     const failOn = String(args["fail-on"]) as FailOn;
     if (!apiKey) {
       console.error(pc.red("  Set EMAILENS_API_KEY (or pass --api-key). Keys are at app.emailens.dev/dashboard/api."));
+      process.exit(2);
+    }
+    if (Boolean(args.test) !== Boolean(args["run-id"])) {
+      console.error(pc.red("  --test and --run-id must be provided together."));
       process.exit(2);
     }
     if (!["all", "check", "drift", "none"].includes(failOn)) {
@@ -149,6 +221,8 @@ const wait = defineCommand({
       since,
       timeout: Math.min(600, Math.max(1, Number(args.timeout) || 60)),
       failOn,
+      testId: args.test as string | undefined,
+      runId: args["run-id"] as string | undefined,
     });
 
     if (args.json) {
@@ -212,5 +286,5 @@ export default defineCommand({
     name: "inbox",
     description: "Your Emailens test inbox, from CI",
   },
-  subCommands: { wait },
+  subCommands: { begin, wait },
 });

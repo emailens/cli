@@ -216,6 +216,21 @@ npm run send-signup-email              # your app sends it
 emailens inbox wait --subject "Welcome" --since "$SINCE"
 ```
 
+For release history against a named approved preview, create a saved test in
+the Emailens dashboard, then begin the run before the staging send. The run ID
+ties delayed delivery to that release and stores branch and commit metadata:
+
+```bash
+RUN=$(emailens inbox begin YOUR_SAVED_TEST_ID --json)
+RUN_ID=$(node -p 'JSON.parse(process.argv[1]).runId' "$RUN")
+npm run send-signup-email
+emailens inbox wait --test YOUR_SAVED_TEST_ID --run-id "$RUN_ID" --timeout 180
+```
+
+The saved test controls its inbox, subject, sender, approved preview, and
+failure policy. `inbox wait` still supports the untracked `--subject` and
+`--since` flow shown above.
+
 Options: `--subject`, `--sender`, `--inbox <id>`, `--since` (ISO time, epoch
 ms, or a duration such as `5m`; default 2 minutes back), `--timeout` (seconds,
 default 60, at most 600), `--fail-on all|check|drift|none` (default `all`),
