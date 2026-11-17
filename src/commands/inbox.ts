@@ -11,6 +11,9 @@ import pc from "picocolors";
  */
 
 const API_URL = () => process.env.EMAILENS_API_URL ?? "https://app.emailens.dev";
+// Keep each long-poll below the app proxy's request timeout. The CLI's overall
+// timeout is separate and spans repeated polls.
+const SERVER_WAIT_SECONDS = 20;
 
 export type FailOn = "all" | "check" | "drift" | "none";
 
@@ -51,7 +54,7 @@ export interface WaitOptions {
   sender?: string;
   inbox?: string;
   since: number;
-  /** Overall seconds; each request waits at most 60 on the server. */
+  /** Overall seconds; each request waits at most SERVER_WAIT_SECONDS. */
   timeout: number;
   failOn: FailOn;
   testId?: string;
@@ -74,7 +77,15 @@ export async function waitForEmail(
   while (Date.now() < deadline) {
     const q = new URLSearchParams({
       since: String(o.since),
-      timeout: String(Math.max(1, Math.min(60, Math.ceil((deadline - Date.now()) / 1000)))),
+      timeout: String(
+        Math.max(
+          1,
+          Math.min(
+            SERVER_WAIT_SECONDS,
+            Math.ceil((deadline - Date.now()) / 1000),
+          ),
+        ),
+      ),
     });
     if (o.subject) q.set("subject", o.subject);
     if (o.sender) q.set("sender", o.sender);
@@ -89,7 +100,7 @@ export async function waitForEmail(
     } catch (e) {
       return { code: 2, error: `Could not reach Emailens: ${(e as Error).message}`, failures: [] };
     }
-    if (res.status === 408) continue;
+    if ([408, 502, 503, 504].includes(res.status)) continue;
     const body = (await res.json().catch(() => ({}))) as WaitResponse;
     if (res.status === 401)
       return { code: 2, error: "Invalid or revoked API key (EMAILENS_API_KEY).", failures: [] };

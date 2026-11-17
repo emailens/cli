@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.3 - 2026-11-17
+
+### Fixed
+
+- **`emailens inbox wait`** keeps each server poll below the app proxy timeout
+  and retries transient gateway responses, while preserving the overall wait
+  window.
+
 ## 0.14.1 - 2026-11-12
 
 ### Fixed
