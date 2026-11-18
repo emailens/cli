@@ -21,8 +21,13 @@ export default defineConfig({
   external: ["playwright-core", "sharp", "isolated-vm", "sucrase", "react", "@react-email/components", "@react-email/render", "mjml", "@maizzle/framework"],
   esbuildOptions(options) {
     // css-tree reads its data JSON from disk at runtime; its prebuilt module
-    // carries the data inline, so the bundle stands alone.
-    options.alias = { "css-tree": "css-tree/dist/csstree.esm" };
+    // carries the data inline, so the bundle stands alone. React Email imports
+    // that prebuilt module by subpath; keep that import intact instead of
+    // appending the subpath to the root alias.
+    options.alias = {
+      "css-tree/dist/csstree.esm": "css-tree/dist/csstree.esm",
+      "css-tree": "css-tree/dist/csstree.esm",
+    };
   },
   banner: {
     // Bundled CommonJS dependencies (iconv-lite and friends) call require().

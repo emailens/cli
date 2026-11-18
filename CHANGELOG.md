@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.4 - 2026-11-18
+
+### Changed
+
+- **Engine 0.19.2**: React Email 6 imports compile through the current
+  `react-email` package. Design checks share image fetches between both pages,
+  choose the placement with the least pixel difference, simulate Apple Mail's
+  forced darkening, and preserve fixed image widths in Gmail Android.
+
 ## 0.14.3 - 2026-11-17
 
 ### Fixed
